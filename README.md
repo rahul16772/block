@@ -1,184 +1,61 @@
-# BlockAssist
+# MBAG-d
 
-<div align="center">
+Distributed extensions of the paper [AssistanceZero: Scalably Solving Assistance Games](https://arxiv.org/abs/2504.07091). Adds
+multiplayer interactions, distributed training modalities, model merging/uploading, and on-chain attribution.
 
-![gen-blockassit-gh-header](splash.png)
+## Setup
 
-</div>
+### Dependencies
 
-**BlockAssist** is an AI assistant that learns from its user’s actions in Minecraft. The assistant appears in-game with you, starting with only basic knowledge of the game’s commands. As you play, it learns how to assist you in building, learning directly from your actions. It shows an early demo of _assistance learning_ - a new paradigm for aligning agents to human preferences across domains.
+Supported Python versions: [3.8, 3.9, 3.10] (see [pyenv](https://github.com/pyenv/pyenv)).
 
-Steps:
-1. Follow setup instructions below
-2. Play Minecraft episodes and complete the building goal in the shortest time possible.  This will help train the best assistant models.
-3. Share your progress with the community by posting your gameplay videos, stats, and Hugging Face uploads on Discord and X. Track your participation on the leaderboard.
+Similar to the original MBAG [repository](https://github.com/cassidylaidlaw/minecraft-building-assistance-game) instructions, setup your Python environment by running `pip install -e .`
 
-**You do not need a copy of Minecraft to play! BlockAssist includes a free version.**
-
-## Installation (macOS)
-
-*You only need to run these once per computer.*
-
-**Step 1: Clone the repo and enter the directory**
-
-```bash
-git clone https://github.com/gensyn-ai/blockassist.git
-cd blockassist
-```
-
-**Step 2: Install Java 1.8.0_152**
-
-Run the setup script:
-
-```bash
-./setup.sh
-```
-
-**Step 3: Install `pyenv`**
-
-**Note**: This step assumes [Homebrew](https://brew.sh/) is installed on your Mac
-
-```bash
-brew update
-brew install pyenv
-```
-
-**Step 4: Install Python 3.10**
-
-```bash
-pyenv install 3.10
-```
-
-**Step 5: Install `psutil` and `readchar`**
-
-```bash
-pyenv exec pip install psutil readchar
-```
-
-## Installation (Linux)
-
-*You only need to run these once per computer.*
-
-**Step 1: Clone the repo and enter the directory**
-
-```bash
-git clone https://github.com/gensyn-ai/blockassist.git
-cd blockassist
-```
-
-**Step 2: Install Java 1.8.0_152**
-
-Run the setup script:
-
-```bash
-./setup.sh
-```
-
-**Step 3: Install `pyenv`**
-
-```bash
-curl -fsSL https://pyenv.run | bash
-```
-
-**Note:** Follow the instructions `pyenv` prints about adding it to your shell and restart your terminal.
-
-**Step 4: Install Python 3.10**
-
-```bash
-sudo apt update
-sudo apt install make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev curl git libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev # Dependencies for Python installation
-pyenv install 3.10
-```
-
-**Step 5: Install `psutil` and `readchar`**
-
-```bash
-pip install psutil readchar
-```
-
-## Run BlockAssist
-
-Use `ls logs` to list available log files, and `tail -f logs/<name>.log` to monitor progress. 
-
-**Note:** when asked to press `ENTER`, you may need to do so a couple of times.
-
-**Run with Python**
-
-* On macOS: `pyenv exec python run.py`
-* On Linux: `python run.py`
-
-The program will install additional dependencies as required. Follow any prompts and approve any requests.
-
-**Hugging Face Token**
-
-You will be asked to enter a [Hugging Face](https://huggingface.co) API token. Follow [these instructions](https://huggingface.co/docs/hub/en/security-tokens) to generate one with **Write** access.
-
-
-**Gensyn Testnet login**
-
-You will be prompted to log in through your browser (`http://localhost:3000`). If you have previously logged in, this step will be skipped. Otherwise, use the browser window that opens to log in.
-
-
-**Play Minecraft**
-
-Once the Minecraft windows have loaded, the Python script will ask you to press `ENTER`.
-
-Go to the first Minecraft window that opened (the other will be minimized on macOS). Click the window and press `ENTER` to allow it to capture your inputs. Complete the structure in-game, then return to your terminal and press `ENTER` to end the session.
-
-
-**Training**
-
-A model will now be trained and submitted to Hugging Face and to Gensyn’s smart contract.
-
-**Review logs**
-
-If you reach this stage in the logging window and can see a transaction in the block explorer, your submission has succeeded.
-
-Logging window:
-
-```
-[2025-07-28 05:03:48,955][blockassist.globals][INFO] - Successfully uploaded model to HuggingFace: h-grieve/blockassist-bc-bellowing_pouncing_horse_1753675374 with size 20.00 MB
-```
-
-[Block explorer](https://gensyn-testnet.explorer.alchemy.com/address/0xE2070109A0C1e8561274E59F024301a19581d45c?tab=logs):
-
-```
-huggingFaceID
-string
-false
-<HF-username>/blockassist-bc-bellowing_pouncing_horse_1753675374
-```
-
-The program will then end. Please close any Minecraft windows if they remain open.
-
-
-## Configuration
-
-BlockAssist uses [Hydra](https://github.com/facebookresearch/hydra) for configuration management. You can modify settings in the `config.yaml` file or override them via command-line arguments.
-
-
-- `episode_count` — Controls the number of episodes. If `episode_count` is greater than 1, a new episode will start each time you press `ENTER` during session recording.
-
-- `num_training_iters` — Controls the number of training iterations across all recorded episodes.
-
-
-## Testing & Contributing
+You will also need to install Java JDK 8u152, which can be found [here](https://www.oracle.com/java/technologies/javase/javase8-archive-downloads.html).
 
 ### Linting / Testing
 
-This project relies on Ruff for formatting/linting. To format imports, run:
+This project relies mostly on ruff for formatting/linting purposes. To format, simply run:
 
+    ruff check --select I --fix .
 
-```bash
-ruff check --select I --fix .
-```
+Pytest is used to run unit/integration tests. See below.
 
-## Telemetry
+    pytest .
+    pytest -m "integration" .
 
-This repository uploads telemetry to Gensyn services. To disable telemetry, export:
+## Flow
 
-```bash
-export DISABLE_TELEMETRY=1
-```
+This project has three primary interaction phases; 1.) startup + goal selection, 2.) recording a building episode, and 3.) training the actual model. The first and third are mediated by the launcher script but the 2nd is entirely in the Minecraft client.
 
-**Note**: If your turn off telemetry, your contributions may not be counted towards the [BlockAssist leaderboard](https://dashboard.gensyn.ai).
+Individual commands are explained below, but you can also run mbag-d in `e2e` mode, which will run through all following steps in sequence:
+
+    mbag-d e2e
+
+### Startup
+
+To initiate the primary episode recording flow, execute the following in a terminal:
+
+    mbag-d init
+
+Upon a successful startup, you will see a Minecraft window (waiting at the menu screen) and the following console output:
+
+    Hello world!
+
+### Recording/Building
+
+Starts recording a single episode of the user building a randomly selected goal.
+
+    mbag-d record
+
+### Training
+
+Trains a model from a previously saved episode and saves it in HuggingFace format. Optionally uploads.
+
+    mbag-d train
+
+### Evaluation
+
+Evaluates the performance of a trained checkpoint against cross validated human data.
+
+    mbag-d eval

@@ -1,1 +1,0 @@
-# JSON files are copied from https://github.com/cassidylaidlaw/minecraft-building-assistance-game/tree/master/mbag/environment/goals
