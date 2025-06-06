@@ -1,0 +1,4 @@
+[submodule "mbag-repo"]
+ path = mbag-repo
+ url = https://github.com/cassidylaidlaw/minecraft-building-assistance-game
+ ignore = all

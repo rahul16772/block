@@ -14,14 +14,16 @@ description = "Distributed experiments built using the MBAG multiagent environme
 readme = "README.md"
 requires-python = ">=3.8,<3.11"
 dependencies = [
+  "aiofiles",
   "datasets",
   "eth-account",
   "hydra-core",
-  "minecraft-building-assistance-game[rllib,malmo] @ git+https://github.com/cassidylaidlaw/minecraft-building-assistance-game",
   "numpy",
   "requests",
+  "six",
   "tensorboard",
   "torch",
+  "opencv-python",
   "transformers==4.51.3",
   "wandb",
   "web3",

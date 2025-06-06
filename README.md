@@ -9,7 +9,10 @@ multiplayer interactions, distributed training modalities, model merging/uploadi
 
 Supported Python versions: [3.8, 3.9, 3.10] (see [pyenv](https://github.com/pyenv/pyenv)).
 
-Similar to the original MBAG [repository](https://github.com/cassidylaidlaw/minecraft-building-assistance-game) instructions, setup your Python environment by running `pip install -e .`
+Similar to the original MBAG [repository](https://github.com/cassidylaidlaw/minecraft-building-assistance-game) instructions, setup your Python environment by running:
+
+    pip install ./mbag-repo[rllib,malmo]
+    pip install -e .
 
 You will also need to install Java JDK 8u152, which can be found [here](https://www.oracle.com/java/technologies/javase/javase8-archive-downloads.html).
 
@@ -30,13 +33,13 @@ This project has three primary interaction phases; 1.) startup + goal selection,
 
 Individual commands are explained below, but you can also run mbag-d in `e2e` mode, which will run through all following steps in sequence:
 
-    mbag-d e2e
+    python -m mbagd.launch
 
 ### Startup
 
 To initiate the primary episode recording flow, execute the following in a terminal:
 
-    mbag-d init
+    python -m mbagd.init
 
 Upon a successful startup, you will see a Minecraft window (waiting at the menu screen) and the following console output:
 
@@ -46,16 +49,16 @@ Upon a successful startup, you will see a Minecraft window (waiting at the menu 
 
 Starts recording a single episode of the user building a randomly selected goal.
 
-    mbag-d record
+    python -m mbagd.record
 
 ### Training
 
 Trains a model from a previously saved episode and saves it in HuggingFace format. Optionally uploads.
 
-    mbag-d train
+    python -m mbagd.train
 
 ### Evaluation
 
 Evaluates the performance of a trained checkpoint against cross validated human data.
 
-    mbag-d eval
+    python -m mbagd.eval

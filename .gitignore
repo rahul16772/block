@@ -3,5 +3,12 @@
 .venv/
 __pycache__/
 *.egg-info/
+
 *.pyc
 *.pyo
+
+## Project
+mbag-repo/
+data/
+outputs/
+logs/
