@@ -10,8 +10,9 @@ _LOG = get_logger()
 class LoggedProcessContext(ABC):
     """Context manager for running a subprocess with logging."""
 
-    def __init__(self, prefix) -> None:
+    def __init__(self, prefix, cwd = None) -> None:
         self.prefix = prefix
+        self.cwd = cwd
         self.tasks = []
 
     def args(self) -> list[str]: ...
@@ -27,12 +28,14 @@ class LoggedProcessContext(ABC):
 
     async def __aenter__(self):
         args = self.args()
+        if self.cwd:
+            kwargs = {"cwd": self.cwd}
         self.process = await asyncio.create_subprocess_exec(
             *args,
+            **kwargs,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            cwd="mbag-repo"
-        )
+            env={"TMPDIR": "/tmp/"},)
         self.tasks = list(
             map(
                 asyncio.create_task,
@@ -60,5 +63,5 @@ class LoggedProcessContext(ABC):
                     _LOG.warning(f"Killing {self.prefix} process...")
                     self.process.kill()
                     await self.process.wait()
-        except ProcessLookupError as e:
+        except ProcessLookupError:
             _LOG.warning(f"Process {self.process.pid} not found!")
