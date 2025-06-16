@@ -28,14 +28,17 @@ class LoggedProcessContext(ABC):
 
     async def __aenter__(self):
         args = self.args()
+        kwargs = {}
         if self.cwd:
             kwargs = {"cwd": self.cwd}
+
         self.process = await asyncio.create_subprocess_exec(
             *args,
             **kwargs,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            env={"TMPDIR": "/tmp/"},)
+            env={"TMPDIR": "/tmp/"}
+        )
         self.tasks = list(
             map(
                 asyncio.create_task,
