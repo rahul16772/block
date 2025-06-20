@@ -4,6 +4,7 @@ import os
 import hydra
 from omegaconf import DictConfig
 
+from mbagd.distributed.hf import convert_checkpoint_to_hf
 from mbagd.context import EpisodeContext, MinecraftContext, TrainingContext
 from mbagd.globals import get_logger
 
@@ -14,6 +15,7 @@ def get_stages(cfg: DictConfig) -> list[str]:
         return [
             "episode",
             "train",
+            "convert",
         ]
 
     return [cfg["mode"]]
@@ -41,6 +43,15 @@ async def _main(cfg: DictConfig):
                 await asyncio.wait_for(
                     training_ctx.training_ended.wait(), timeout=60 * 60 * 6
                 )
+
+        if "convert" in stages:
+            _LOG.info("Starting model conversion!!")
+            # TODO: Fix!!
+            convert_checkpoint_to_hf(
+                checkpoint_dir="mbag-repo/data/assistancezero_assistant/checkpoint-002000",
+                out_dir="mbag-repo/data/assistancezero_assistant_hf",
+                arch="custom",
+            )
 
     except Exception as e:
         _LOG.warning("Recording session was stopped with exception", exc_info=e)
