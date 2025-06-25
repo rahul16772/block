@@ -1,62 +1,70 @@
-from abc import ABC
 import asyncio
+import os
+from abc import ABC
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 import aiofiles
-from types import TracebackType
 
 from mbagd.globals import get_logger
 
 _LOG = get_logger()
 
+
 class LoggedProcessContext(ABC):
     """Context manager for running a subprocess with logging."""
 
-    def __init__(self, prefix, cwd = None) -> None:
+    def __init__(self, prefix, cwd=None) -> None:
         self.prefix = prefix
         self.cwd = cwd
-        self.tasks = []
 
     def args(self) -> list[str]: ...
 
-    async def process_line(self, line):
+    async def process_line(self, file, line):
         return line
 
     async def write_stream(self, stream, file):
-        async with aiofiles.open(file, mode='w') as f:
-            async for line in stream:
-                line = await self.process_line(line.decode())
-                await f.write(line)
+        try:
+            async with aiofiles.open(file, mode="w") as f:
+                async for line in stream:
+                    line = await self.process_line(file, line.decode())
+                    await f.write(line)
+        except asyncio.CancelledError:
+            self.process.terminate()
 
-    async def __aenter__(self):
+    @asynccontextmanager
+    async def start(self) -> AsyncIterator["LoggedProcessContext"]:
         args = self.args()
         kwargs = {}
         if self.cwd:
             kwargs = {"cwd": self.cwd}
+
+        if not os.path.exists("logs"):
+            os.makedirs("logs")
 
         self.process = await asyncio.create_subprocess_exec(
             *args,
             **kwargs,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            env={"TMPDIR": "/tmp/"}
+            env={"TMPDIR": "/tmp/"},
         )
-        self.tasks = list(
+        tasks = list(
             map(
                 asyncio.create_task,
                 [
-                    self.write_stream(self.process.stdout, f"logs/{self.prefix}_out.txt"),
-                    self.write_stream(self.process.stderr, f"logs/{self.prefix}_err.txt"),
+                    self.write_stream(
+                        self.process.stdout, f"logs/{self.prefix}_out.txt"
+                    ),
+                    self.write_stream(
+                        self.process.stderr, f"logs/{self.prefix}_err.txt"
+                    ),
                 ],
             )
         )
-        return self
-
-    async def __aexit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        traceback: TracebackType | None,
-    ) -> None:
         try:
+            yield self
+            await asyncio.wait(tasks)
             if self.process and not self.process.returncode:
                 _LOG.info(f"Terminating {self.prefix} process...")
                 self.process.terminate()
@@ -68,3 +76,6 @@ class LoggedProcessContext(ABC):
                     await self.process.wait()
         except ProcessLookupError:
             _LOG.warning(f"Process {self.process.pid} not found!")
+        except asyncio.CancelledError:
+            _LOG.warning(f"Process {self.process.pid} was cancelled!")
+            raise

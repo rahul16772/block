@@ -22,26 +22,32 @@ def get_stages(cfg: DictConfig) -> list[str]:
 
 async def _main(cfg: DictConfig):
     try:
-        # TODO: Run in a loop
         if cfg["mode"] == "e2e":
             _LOG.info("Starting full recording session!!")
 
         stages = get_stages(cfg)
         if "episode" in stages:
             _LOG.info("Starting episode recording!!")
-            async with MinecraftContext() as minecraft_ctx:
-                async with EpisodeContext() as episode_ctx:
-                    await asyncio.wait_for(
-                        minecraft_ctx.game_ended.wait(), timeout=60 * 30
-                    )
+            async with MinecraftContext(num_instances=1).start() as minecraft_ctx:
+                await asyncio.wait_for(
+                    minecraft_ctx.game_started.wait(), timeout=60 * 5 # minutes
+                )
+                if not minecraft_ctx.game_crashed:
+                    async with EpisodeContext().start() as episode_ctx:
+                        await asyncio.wait(
+                            [minecraft_ctx.game_ended.wait(), episode_ctx.building_ended.wait()],
+                            return_when=asyncio.FIRST_COMPLETED,
+                            timeout=60 * 30 # minutes
+                        )
+                        episode_ctx.process.terminate()
 
         if "train" in stages:
             _LOG.info("Starting model training!!")
             async with TrainingContext(
-                data_split="human_alone", algorithm="bc_human"
-            ) as training_ctx:
+                data_split="human_with_assistant", algorithm="bc_human"
+            ).start() as training_ctx:
                 await asyncio.wait_for(
-                    training_ctx.training_ended.wait(), timeout=60 * 60 * 6
+                    training_ctx.training_ended.wait(), timeout=60 * 60 * 24 # hours
                 )
 
         if "convert" in stages:
