@@ -4,9 +4,84 @@ import sys
 from contextlib import asynccontextmanager
 
 from mbagd.globals import get_logger
-from mbagd.log import LoggedProcessContext
+import os
+from abc import ABC
+
+import aiofiles
+
 
 _LOG = get_logger()
+
+
+class LoggedProcessContext(ABC):
+    """Context manager for running a subprocess with logging."""
+
+    def __init__(self, prefix, cwd=None) -> None:
+        self.prefix = prefix
+        self.cwd = cwd
+
+    def args(self) -> list[str]: ...
+
+    async def process_line(self, file, line):
+        return line
+
+    async def write_stream(self, stream, file):
+        try:
+            async with aiofiles.open(file, mode="w") as f:
+                async for line in stream:
+                    line = await self.process_line(file, line.decode())
+                    await f.write(line)
+        except asyncio.CancelledError:
+            self.process.terminate()
+
+    @asynccontextmanager
+    async def start(self) -> AsyncIterator["LoggedProcessContext"]:
+        args = self.args()
+        kwargs = {}
+        if self.cwd:
+            kwargs = {"cwd": self.cwd}
+
+        if not os.path.exists("logs"):
+            os.makedirs("logs")
+
+        self.process = await asyncio.create_subprocess_exec(
+            *args,
+            **kwargs,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env={"TMPDIR": "/tmp/"},
+        )
+        tasks = list(
+            map(
+                asyncio.create_task,
+                [
+                    self.write_stream(
+                        self.process.stdout, f"logs/{self.prefix}_out.txt"
+                    ),
+                    self.write_stream(
+                        self.process.stderr, f"logs/{self.prefix}_err.txt"
+                    ),
+                ],
+            )
+        )
+        try:
+            yield self
+            if self.process.returncode is None:
+                await self.process.wait()
+                await asyncio.wait(tasks)
+
+                exceptions = []
+                for task in tasks:
+                    if ex := task.exception():
+                        exceptions.append(ex)
+                if exceptions:
+                    raise exceptions[0]
+
+        except ProcessLookupError:
+            _LOG.warning(f"Process {self.process.pid} not found!")
+        except asyncio.CancelledError:
+            _LOG.warning(f"Process {self.process.pid} was cancelled!")
+            raise
 
 
 
@@ -15,9 +90,11 @@ class MinecraftContext(LoggedProcessContext):
     def __init__(self, num_instances=1) -> None:
         super().__init__("minecraft")
         self.num_instances = num_instances
-        self.game_started = asyncio.Event()
-        self.game_ended = asyncio.Event()
-        self.game_crashed = False
+
+        self.num_games_started = 0
+        self.all_games_started = asyncio.Event()
+        self.any_game_ended = asyncio.Event()
+        self.any_game_crashed = False
 
     def args(self):
         return (
@@ -33,25 +110,46 @@ class MinecraftContext(LoggedProcessContext):
             + ["False" for _ in range(self.num_instances - 1)]
         )
 
+    def started(self):
+        tasks = list(
+            map(
+                asyncio.create_task,
+                (self.all_games_started.wait(), self.any_game_ended.wait()),
+            )
+        )
+        return asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+
+    def ended(self):
+        tasks = list(
+            map(
+                asyncio.create_task,
+                (self.process.wait(), self.any_game_ended.wait()),
+            )
+        )
+        return asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+
     async def process_line(self, file, line):
         if file.endswith("_out.txt"):
             if "Successfully transformed method <init>" in line:
-                self.game_started.set()
-                _LOG.info("Minecraft instance started successfully.")
+                self.num_games_started += 1
+                if self.num_games_started == self.num_instances:
+                    self.all_games_started.set()
+                    _LOG.info("All Minecraft instances started successfully.")
             elif "[Client thread/INFO]: Stopping!" in line:
-                self.game_ended.set()
+                self.any_game_ended.set()
                 raise asyncio.CancelledError("Minecraft instance manually stopped.")
         elif file.endswith("_err.txt"):
             if "Minecraft unexpectedly crashed on launch." in line:
-                self.game_started.set()
-                self.game_ended.set()
-                self.game_crashed = True
-                _LOG.error("Minecraft unexpectedly crashed on launch.")
+                self.any_game_ended.set()
+                self.any_game_crashed = True
+                raise asyncio.CancelledError(
+                    "Minecraft instance unexpectedly crashed on launch."
+                )
 
         return line
 
     @asynccontextmanager
-    async def start(self) ->  AsyncIterator['MinecraftContext']:
+    async def start(self) -> AsyncIterator["MinecraftContext"]:
         async with super().start() as _:
             yield self
 
@@ -75,19 +173,39 @@ class EpisodeContext(LoggedProcessContext):
         args = [sys.executable, "-m", "mbag.scripts.evaluate"]
         if self.human_alone:
             args += ["with", "human_alone"]
+        else:
+            args += ["with", "human_with_assistant"]
+
         if self.assistant_checkpoint:
             args += [f"assistant_checkpoint={self.assistant_checkpoint}"]
         return args
 
-    @asynccontextmanager
-    async def start(self) ->  AsyncIterator['EpisodeContext']:
-        try:
-            async with super().start() as _:
-                yield self
-        finally:
-            self.building_ended.set()
-            _LOG.info("Building episode finished.")
+    def started(self):
+        return self.building_started.wait()
 
+    def ended(self):
+        tasks = list(
+            map(
+                asyncio.create_task,
+                (self.process.wait(), self.building_ended.wait()),
+            )
+        )
+        return asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+
+    async def process_line(self, file, line):
+        if "waiting for the mission to start" in line:
+            self.building_started.set()
+            _LOG.info("Waiting for Malmo mission to start.")
+        elif "Attempted to get observation of an already ended mission" in line:
+            self.building_ended.set()
+            raise asyncio.CancelledError("Malmo mission concluded.")
+
+        return line
+
+    @asynccontextmanager
+    async def start(self) -> AsyncIterator["EpisodeContext"]:
+        async with super().start() as _:
+            yield self
 
 
 class TrainingContext(LoggedProcessContext):
@@ -116,10 +234,6 @@ class TrainingContext(LoggedProcessContext):
         ]
 
     @asynccontextmanager
-    async def start(self) ->  AsyncIterator['TrainingContext']:
-        try:
-            async with super().start() as _:
-                yield self
-        finally:
-            self.training_ended.set()
-            _LOG.info("Training model finished.")
+    async def start(self) -> AsyncIterator["TrainingContext"]:
+        async with super().start() as _:
+            yield self
