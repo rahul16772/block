@@ -62,3 +62,13 @@ Trains a model from a previously saved episode and saves it in HuggingFace forma
 Evaluates the performance of a trained checkpoint against cross validated human data.
 
     python -m mbagd.eval
+
+## Telemetry
+
+This repository uploads telemetry to Gensyn services. To disable telemetry, export the following variable:
+
+```bash
+export DISABLE_TELEMETRY=1
+```
+
+Then, you can run the repository as normal.
