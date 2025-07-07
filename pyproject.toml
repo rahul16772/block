@@ -24,7 +24,10 @@ dependencies = [
   "tensorboard",
   "torch",
   "opencv-python",
+  "opentelemetry-api",
+  "opentelemetry-sdk",
   "transformers==4.51.3",
+  "requests",
   "wandb",
   "web3",
 ]
