@@ -1,9 +1,46 @@
 import json
 import os
 import platform
+import datetime
+
+from importlib.metadata import version
 
 import torch
 import requests
+
+from pydantic import BaseModel
+
+TELEMETRY_API_BASE = "https://telemetry-api.internal-apps-central1.clusters.gensyn.ai"
+TELEMETRY_API_EVENT_SESSION = f"{TELEMETRY_API_BASE}/event/session"
+TELEMETRY_API_EVENT_MODEL_TRAINED = f"{TELEMETRY_API_BASE}/event/trained"
+TELEMETRY_API_EVENT_MODEL_UPLOADED = f"{TELEMETRY_API_BASE}/event/uploaded"
+BLOCKASSIST_VERSION = version("blockassist")
+
+class EventSession(BaseModel):
+    timestamp: str
+    duration_ms: int
+    user_id: str
+    goal_pct: float
+    ip_addr: str
+    blockassist_version: str
+
+class EventModelTrained(BaseModel):
+    timestamp: str
+    duration_ms: int
+    session_count: int
+    user_id: str
+    ip_addr: str
+    hardware_dict: str
+    blockassist_version: str
+
+class EventModelUploaded(BaseModel):
+    timestamp: str
+    size_bytes: int
+    user_id: str
+    ip_addr: str
+    huggingface_id: str
+    blockassist_version: str
+
 
 def get_ip():
     ip = requests.get("https://icanhazip.com/").text
@@ -28,10 +65,6 @@ def get_accelerator_info():
     return out_devices
 
 def get_system_info():
-    if os.environ.get("DISABLE_TELEMETRY", "false").lower() != "false":
-        return {}
-
-
     return {
         "uname": json.dumps(platform.uname()._asdict()),
         "arch": platform.machine(),
@@ -39,3 +72,50 @@ def get_system_info():
         "accelerators": get_accelerator_info(),
         "ip": get_ip()
     }
+
+def push_telemetry_event_session(duration_ms: int, user_id: str, goal_pct=float):
+    if os.environ.get("DISABLE_TELEMETRY", "false").lower() != "false":
+        return
+
+    c = EventSession(
+        timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        duration_ms=duration_ms,
+        user_id=user_id,
+        goal_pct=goal_pct,
+        ip_addr=get_ip(),
+        blockassist_version=BLOCKASSIST_VERSION
+    )
+
+    requests.post(TELEMETRY_API_EVENT_SESSION, json=dict(c))
+    
+
+def push_telemetry_event_trained(duration_ms: int, user_id: str, session_count=int):
+    if os.environ.get("DISABLE_TELEMETRY", "false").lower() != "false":
+        return
+    
+    c = EventModelTrained(
+        timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        duration_ms=duration_ms,
+        user_id=user_id,
+        session_count=session_count,
+        hardware_dict=get_system_info(),
+        ip_addr=get_ip(),
+        blockassist_version=BLOCKASSIST_VERSION
+    )
+
+    requests.post(TELEMETRY_API_EVENT_MODEL_TRAINED, json=dict(c))
+
+def push_telemetry_event_uploaded(size_bytes: int, user_id: str, huggingface_id=str):
+    if os.environ.get("DISABLE_TELEMETRY", "false").lower() != "false":
+        return
+    
+    c = EventModelUploaded(
+        timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        size_bytes=size_bytes,
+        user_id=user_id,
+        huggingface_id=huggingface_id,
+        ip_addr=get_ip(),
+        blockassist_version=BLOCKASSIST_VERSION
+    )
+
+    requests.post(TELEMETRY_API_EVENT_MODEL_UPLOADED, json=dict(c))

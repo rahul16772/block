@@ -26,6 +26,7 @@ dependencies = [
   "opencv-python",
   "opentelemetry-api",
   "opentelemetry-sdk",
+  "pydantic",
   "transformers==4.51.3",
   "requests",
   "wandb",
