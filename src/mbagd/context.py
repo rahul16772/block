@@ -3,6 +3,9 @@ from collections.abc import AsyncIterator
 import sys
 from contextlib import asynccontextmanager
 
+import boto3
+
+from mbagd.distributed.s3 import zip_and_upload_latest_episode
 from mbagd.globals import get_logger
 import os
 from abc import ABC
@@ -47,6 +50,7 @@ class LoggedProcessContext(ABC):
         self.process = await asyncio.create_subprocess_exec(
             *args,
             **kwargs,
+            limit=1024 * 1024,  # 1 MiB
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             env={"TMPDIR": "/tmp/"},
@@ -66,23 +70,30 @@ class LoggedProcessContext(ABC):
         )
         try:
             yield self
-            if self.process.returncode is None:
-                await self.process.wait()
-                await asyncio.wait(tasks)
-
-                exceptions = []
+            try:
+                await asyncio.wait_for(self.process.wait(), timeout=30)  # seconds
+                await asyncio.wait(tasks, timeout=30)  # seconds
+                # Skip ValueError for stream limit exceeded
+                # Skip Runtime Error for event loop is closed
                 for task in tasks:
                     if ex := task.exception():
-                        exceptions.append(ex)
-                if exceptions:
-                    raise exceptions[0]
+                        raise ex
+
+            except asyncio.TimeoutError:
+                if self.process.returncode is None:
+                    _LOG.warning(
+                        f"Process {self.process.pid} did not terminate in time; trying to kill next."
+                    )
+                    for task in tasks:
+                        task.cancel()
+
+                    self.process.kill()
 
         except ProcessLookupError:
             _LOG.warning(f"Process {self.process.pid} not found!")
         except asyncio.CancelledError:
             _LOG.warning(f"Process {self.process.pid} was cancelled!")
             raise
-
 
 
 # TODO: Connect to existing Minecraft servers.
@@ -207,6 +218,11 @@ class EpisodeContext(LoggedProcessContext):
         async with super().start() as _:
             yield self
 
+        try:
+            zip_and_upload_latest_episode()
+            _LOG.info("Episode data uploaded successfully.")
+        except boto3.exceptions.S3UploadFailedError: # type: ignore
+            _LOG.error("Failed to upload episode data to S3.", exc_info=True)
 
 class TrainingContext(LoggedProcessContext):
     """Context manager for training an assistant in Minecraft."""
