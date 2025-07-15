@@ -18,6 +18,7 @@ dependencies = [
   "datasets",
   "eth-account",
   "hydra-core",
+  "mbag-gensyn @ git+https://github.com/gensyn-ai/minecraft-building-assistance-game.git@96d57776c3595c7ec94d115d05074051bc015f6a",
   "numpy",
   "requests",
   "six",
