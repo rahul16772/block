@@ -5,8 +5,9 @@ from contextlib import asynccontextmanager
 
 import boto3
 
-from mbagd.distributed.s3 import zip_and_upload_latest_episode
-from mbagd.globals import get_logger
+from blockassist.distributed.s3 import zip_and_upload_latest_episode
+from blockassist.globals import get_logger
+
 import os
 from abc import ABC
 

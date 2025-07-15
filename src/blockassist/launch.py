@@ -8,11 +8,11 @@ import time
 import hydra
 from omegaconf import DictConfig
 
-from mbagd.context import EpisodeContext, MinecraftContext, TrainingContext
-from mbagd.distributed.hf import convert_checkpoint_to_hf
-from mbagd.globals import get_logger
+from blockassist.context import EpisodeContext, MinecraftContext, TrainingContext
+from blockassist.distributed.hf import convert_checkpoint_to_hf
+from blockassist.globals import get_logger
 
-from mbagd import telemetry
+from blockassist import telemetry
 
 
 _LOG = get_logger()

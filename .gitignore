@@ -8,7 +8,6 @@ __pycache__/
 *.pyo
 
 ## Project
-mbag-repo/
 data/
 outputs/
 logs/

@@ -3,7 +3,7 @@ from mbag.rllib.training_utils import (
     load_policies_from_checkpoint,
 )
 
-from mbagd.globals import get_logger
+from blockassist.globals import get_logger
 
 _LOG = get_logger()
 

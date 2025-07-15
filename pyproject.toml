@@ -8,13 +8,14 @@ package-dir = { "" = "src" }
 [tool.setuptools_scm]
 
 [project]
-name = "mbag-d"
+name = "blockassist"
 dynamic = ["version"]
 description = "Distributed experiments built using the MBAG multiagent environment (https://github.com/cassidylaidlaw/minecraft-building-assistance-game)."
 readme = "README.md"
 requires-python = ">=3.8,<3.11"
 dependencies = [
   "aiofiles",
+  "boto3",
   "datasets",
   "eth-account",
   "hydra-core",
@@ -29,10 +30,9 @@ dependencies = [
   "opentelemetry-sdk",
   "pydantic",
   "transformers==4.51.3",
-  "requests",
   "wandb",
   "web3",
 ]
 
 [project.optional-dependencies]
-dev = ["black", "isort", "pytest"]
+dev = ["black", "isort", "pytest", "pytest-asyncio"]

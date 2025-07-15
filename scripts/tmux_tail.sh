@@ -5,7 +5,7 @@
 
 # Default values
 LOGS_DIR="${1:-./logs/}"
-SESSION_NAME="${2:-mbagd_logs}"
+SESSION_NAME="${2:-blockassist_logs}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE_ROOT="$(dirname "$SCRIPT_DIR")"
 
@@ -22,7 +22,7 @@ fi
 # Find all files in logs directory (excluding directories)
 log_files=()
 while IFS= read -r -d $'\0' file; do
-  log_files+=("$file")
+    log_files+=("$file")
 done < <(find "$LOGS_DIR" -type f -print0 | sort -z)
 
 if [ ${#log_files[@]} -eq 0 ]; then
@@ -67,12 +67,12 @@ for ((i = 1; i < num_files; i++)); do
         prev_row_first_pane=$(((row - 1) * cols))
         tmux split-window -t "$SESSION_NAME:0.$prev_row_first_pane" -v
         current_pane=$((row * cols))
-  else
+    else
         # Continue current row - split vertically from previous pane
         prev_pane=$((i - 1))
         tmux split-window -t "$SESSION_NAME:0.$prev_pane" -h
         current_pane=$i
-  fi
+    fi
 
     # Start tailing the file in the new pane
     tmux send-keys -t "$SESSION_NAME:0.$current_pane" "tail -f '${log_files[$i]}'" Enter

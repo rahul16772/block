@@ -2,7 +2,7 @@ import zipfile
 from pathlib import Path
 import boto3
 
-from mbagd.globals import get_logger
+from blockassist.globals import get_logger
 
 _LOG = get_logger()
 

@@ -3,7 +3,7 @@ from typing import Sequence
 import torch
 import torch.nn as nn
 
-from mbagd.merging.bagging import bag_models
+from blockassist.merging.bagging import bag_models
 
 
 def test_bagging_simple():
