@@ -2,6 +2,7 @@ import logging
 
 _LOG = None
 
+_DEFAULT_CHECKPOINT = "data/base_checkpoint"
 
 def get_logger() -> logging.Logger:
     global _LOG

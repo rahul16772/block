@@ -1,6 +1,5 @@
 import asyncio
 import os
-import signal
 import socket
 import sys
 import time
@@ -8,12 +7,15 @@ import time
 import hydra
 from omegaconf import DictConfig
 
-from blockassist.context import EpisodeContext, MinecraftContext, TrainingContext
-from blockassist.distributed.hf import convert_checkpoint_to_hf
-from blockassist.globals import get_logger
-
 from blockassist import telemetry
-
+from blockassist.context import (
+    MinecraftContext,
+    TrainingContext,
+    _log_dir,
+)
+from blockassist.distributed.hf import convert_checkpoint_to_hf
+from blockassist.episode import EpisodeRunner
+from blockassist.globals import get_logger
 
 _LOG = get_logger()
 
@@ -39,39 +41,43 @@ async def _main(cfg: DictConfig):
             _LOG.info("Starting full recording session!!")
 
         stages = get_stages(cfg)
+        num_instances = cfg.get("num_instances", 2)
         if "episode" in stages:
             start = time.time()
             _LOG.info("Starting episode recording!!")
-            num_instances = cfg.get("num_instances", 2)
-            async with MinecraftContext(num_instances=num_instances).start() as minecraft_ctx:
+            async with MinecraftContext(
+                num_instances=num_instances
+            ).start() as minecraft_ctx:
+                # TODO: Make timeout an arg to started/ended/etc.
                 await asyncio.wait_for(
                     minecraft_ctx.started(),
-                    timeout=60 * 5,  # minutes
+                    timeout=60 * 2,  # minutes
                 )
                 if not minecraft_ctx.any_game_crashed:
-                    async with EpisodeContext(human_alone=num_instances == 1).start() as episode_ctx:
-                        await asyncio.wait_for(
-                            episode_ctx.started(),
-                            timeout=60 * 5,  # minutes
+                    episode_runner = EpisodeRunner(human_alone=num_instances == 1)
+                    episode_runner.start()
+                    tasks = list(
+                        map(
+                            asyncio.create_task,
+                            (minecraft_ctx.ended(), episode_runner.ended()),
                         )
-                        tasks = list(
-                            map(
-                                asyncio.create_task,
-                                (minecraft_ctx.ended(), episode_ctx.ended()),
-                            )
-                        )
-                        await asyncio.wait(
-                            tasks,
-                            return_when=asyncio.FIRST_COMPLETED,
-                            timeout=60 * 60,  # minutes
-                        )
-                        minecraft_ctx.process.terminate()
-                        episode_ctx.process.send_signal(signal.SIGINT)
-
+                    )
+                    await asyncio.wait(
+                        tasks,
+                        return_when=asyncio.FIRST_COMPLETED,
+                        timeout=60 * 30,  # minutes
+                    )
                 else:
                     raise RuntimeError("A Minecraft instance crashed during launch.")
-            duration_ms = int((time.time() - start) * 1000)
-            telemetry.push_telemetry_event_session(duration_ms, socket.gethostname(), 0)
+
+        if "episode_only" in stages:
+            _LOG.info("Starting episode building only!!")
+            episode_runner = EpisodeRunner(human_alone=num_instances == 1)
+            episode_runner.start()
+            await asyncio.wait_for(
+                episode_runner.ended(),
+                timeout=60 * 30,  # minutes
+            )
 
         if "train" in stages:
             start = time.time()
@@ -103,6 +109,9 @@ async def _main(cfg: DictConfig):
 
 @hydra.main(version_base=None, config_path=".", config_name="config")
 def main(cfg: DictConfig) -> None:
+    if not _log_dir().exists():
+        _log_dir().mkdir(parents=True, exist_ok=True)
+
     asyncio.run(_main(cfg))
 
 

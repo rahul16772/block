@@ -19,20 +19,13 @@ dependencies = [
   "datasets",
   "eth-account",
   "hydra-core",
-  "mbag-gensyn @ git+https://github.com/gensyn-ai/minecraft-building-assistance-game.git@96d57776c3595c7ec94d115d05074051bc015f6a",
-  "numpy",
+  "mbag-gensyn[malmo,rllib] @ git+https://github.com/gensyn-ai/minecraft-building-assistance-game.git@96d57776c3595c7ec94d115d05074051bc015f6a",
+  "numpy>=1.21,<1.22",
   "requests",
   "six",
-  "tensorboard",
-  "torch",
-  "opencv-python",
-  "opentelemetry-api",
-  "opentelemetry-sdk",
   "pydantic",
-  "transformers==4.51.3",
-  "wandb",
   "web3",
 ]
 
 [project.optional-dependencies]
-dev = ["black", "isort", "pytest", "pytest-asyncio"]
+dev = ["ruff", "isort", "pytest", "pytest-asyncio"]
