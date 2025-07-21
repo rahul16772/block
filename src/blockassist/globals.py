@@ -1,8 +1,10 @@
 import logging
 
+_DATA_DIR = "data"
+_DEFAULT_CHECKPOINT = f"{_DATA_DIR}/base_checkpoint"
+
 _LOG = None
 
-_DEFAULT_CHECKPOINT = "data/base_checkpoint"
 
 def get_logger() -> logging.Logger:
     global _LOG

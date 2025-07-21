@@ -10,25 +10,30 @@ from omegaconf import DictConfig
 from blockassist import telemetry
 from blockassist.context import (
     MinecraftContext,
-    TrainingContext,
     _log_dir,
 )
 from blockassist.distributed.hf import convert_checkpoint_to_hf
 from blockassist.episode import EpisodeRunner
+from blockassist.train import TrainingRunner
 from blockassist.globals import get_logger
 
 _LOG = get_logger()
 
 
 def get_stages(cfg: DictConfig) -> list[str]:
-    if cfg["mode"] == "e2e":
+    mode = cfg["mode"]
+
+    if mode == "e2e":
         return [
-            "episode",
+            "episode_full",
             "train",
             "convert",
         ]
+    elif mode in ("episode", "train", "convert"):
+        return [mode]
 
-    return [cfg["mode"]]
+    _LOG.error(f"Unknown script mode: {mode}")
+    return []
 
 
 async def _main(cfg: DictConfig):
@@ -42,65 +47,72 @@ async def _main(cfg: DictConfig):
 
         stages = get_stages(cfg)
         num_instances = cfg.get("num_instances", 2)
-        if "episode" in stages:
-            start = time.time()
-            _LOG.info("Starting episode recording!!")
-            async with MinecraftContext(
-                num_instances=num_instances
-            ).start() as minecraft_ctx:
-                # TODO: Make timeout an arg to started/ended/etc.
-                await asyncio.wait_for(
-                    minecraft_ctx.started(),
-                    timeout=60 * 2,  # minutes
-                )
-                if not minecraft_ctx.any_game_crashed:
-                    episode_runner = EpisodeRunner(human_alone=num_instances == 1)
-                    episode_runner.start()
-                    tasks = list(
-                        map(
-                            asyncio.create_task,
-                            (minecraft_ctx.ended(), episode_runner.ended()),
+
+        for stage in stages:
+            if stage == "episode_full":
+                # Waits for new Minecraft windows + runs Malmo episode.
+                start = time.time()
+                _LOG.info("Starting episode recording!!")
+                async with MinecraftContext(
+                    num_instances=num_instances
+                ).start() as minecraft_ctx:
+                    # TODO: Make timeout an arg to started/ended/etc.
+                    await asyncio.wait_for(
+                        minecraft_ctx.started(),
+                        timeout=60 * 2,  # minutes
+                    )
+                    if not minecraft_ctx.any_game_crashed:
+                        episode_runner = EpisodeRunner(human_alone=num_instances == 1)
+                        episode_runner.start()
+                        tasks = list(
+                            map(
+                                asyncio.create_task,
+                                (minecraft_ctx.ended(), episode_runner.ended()),
+                            )
                         )
-                    )
-                    await asyncio.wait(
-                        tasks,
-                        return_when=asyncio.FIRST_COMPLETED,
-                        timeout=60 * 30,  # minutes
-                    )
-                else:
-                    raise RuntimeError("A Minecraft instance crashed during launch.")
+                        await asyncio.wait(
+                            tasks,
+                            return_when=asyncio.FIRST_COMPLETED,
+                            timeout=60 * 30,  # minutes
+                        )
+                    else:
+                        raise RuntimeError(
+                            "A Minecraft instance crashed during launch."
+                        )
 
-        if "episode_only" in stages:
-            _LOG.info("Starting episode building only!!")
-            episode_runner = EpisodeRunner(human_alone=num_instances == 1)
-            episode_runner.start()
-            await asyncio.wait_for(
-                episode_runner.ended(),
-                timeout=60 * 30,  # minutes
-            )
-
-        if "train" in stages:
-            start = time.time()
-            _LOG.info("Starting model training!!")
-            async with TrainingContext(
-                data_split="human_with_assistant", algorithm="bc_human"
-            ).start() as training_ctx:
+            elif stage == "episode":
+                # Runs Malmo episode with existing Minecraft windows.
+                _LOG.info("Starting episode building only!!")
+                episode_runner = EpisodeRunner(human_alone=num_instances == 1)
+                episode_runner.start()
                 await asyncio.wait_for(
-                    training_ctx.training_ended.wait(),
+                    episode_runner.ended(),
+                    timeout=60 * 30,  # minutes
+                )
+
+            elif stage == "train":
+                start = time.time()
+                _LOG.info("Starting model training!!")
+                training_runner = TrainingRunner()
+                training_runner.start()
+                await asyncio.wait_for(
+                    training_runner.ended(),
                     timeout=60 * 60 * 24,  # hours
                 )
-            duration_ms = int((time.time() - start) * 1000)
-            telemetry.push_telemetry_event_trained(duration_ms, socket.gethostname(), 1)
+                duration_ms = int((time.time() - start) * 1000)
+                telemetry.push_telemetry_event_trained(
+                    duration_ms, socket.gethostname(), 1
+                )
 
-        if "convert" in stages:
-            _LOG.info("Starting model conversion!!")
-            # TODO: Fix!!
-            convert_checkpoint_to_hf(
-                checkpoint_dir="mbag-repo/data/assistancezero_assistant/checkpoint-002000",
-                out_dir="mbag-repo/data/assistancezero_assistant_hf",
-                arch="custom",
-            )
-            telemetry.push_telemetry_event_uploaded(0, socket.gethostname(), "")
+            elif stage == "convert":
+                _LOG.info("Starting model conversion!!")
+                # TODO: Fix!!
+                convert_checkpoint_to_hf(
+                    checkpoint_dir="mbag-repo/data/assistancezero_assistant/checkpoint-002000",
+                    out_dir="mbag-repo/data/assistancezero_assistant_hf",
+                    arch="custom",
+                )
+                telemetry.push_telemetry_event_uploaded(0, socket.gethostname(), "")
 
     except Exception as e:
         _LOG.error("Recording session was stopped with exception", exc_info=e)

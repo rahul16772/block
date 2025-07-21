@@ -9,5 +9,6 @@ __pycache__/
 
 ## Project
 data/base_checkpoint/evaluate*
+data/evaluate/
 outputs/
 logs/

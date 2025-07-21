@@ -10,7 +10,6 @@ import aiofiles
 
 from blockassist.globals import _DEFAULT_CHECKPOINT, get_logger
 
-
 _LOG = get_logger()
 
 
@@ -74,16 +73,6 @@ class LoggedProcessContext(ABC):
                 ],
             )
         )
-        def done(task):
-            if task.exception() is not None:
-                self.process.terminate()
-                return
-
-            _LOG.info(f"Process {self.process.pid} finished writing logs!")
-
-        for task in tasks:
-            task.add_done_callback(done)
-
         try:
             yield self
             try:
@@ -182,36 +171,5 @@ class MinecraftContext(LoggedProcessContext):
 
     @asynccontextmanager
     async def start(self) -> AsyncIterator["MinecraftContext"]:
-        async with super().start() as _:
-            yield self
-
-
-class TrainingContext(LoggedProcessContext):
-    """Context manager for training an assistant in Minecraft."""
-
-    def __init__(
-        self,
-        data_split,
-        algorithm,
-    ):
-        super().__init__("training", cwd="mbag-repo")
-        self.data_split = data_split
-        self.algorithm = algorithm
-
-        self.training_started = asyncio.Event()
-        self.training_ended = asyncio.Event()
-
-    def args(self):
-        return [
-            sys.executable,
-            "-m",
-            "mbag.scripts.train",
-            "with",
-            self.algorithm,
-            f"data_split={self.data_split}",
-        ]
-
-    @asynccontextmanager
-    async def start(self) -> AsyncIterator["TrainingContext"]:
         async with super().start() as _:
             yield self
