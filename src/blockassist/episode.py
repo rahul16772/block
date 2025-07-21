@@ -5,7 +5,7 @@ from mbag.environment.goals import ALL_GOAL_GENERATORS
 from mbag.scripts.evaluate import ex
 
 from blockassist.data import backup_existing_evaluate_dirs
-from blockassist.globals import get_logger
+from blockassist.globals import _DATA_DIR, get_logger
 from blockassist.goals.generator import BlockAssistGoalGenerator
 
 _LOG = get_logger()
@@ -81,7 +81,7 @@ class EpisodeRunner:
         # MalmoClient.get_observations = wrapped_get_observations
 
         _LOG.info("Backing up old evaluate directories.")
-        backup_existing_evaluate_dirs(Path(self.assistant_checkpoint))
+        backup_existing_evaluate_dirs(Path(_DATA_DIR))
 
         self.building_started.set()
         for _ in range(self.episode_count):

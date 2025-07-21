@@ -21,6 +21,7 @@ def run_train_main(mbag_config: dict, rllib_path: str):
             "data_split": "human_with_assistant",
             "goal_generator": "blockassist",
             "input": rllib_path,
+            "num_training_iters": 1
         },
     ).result
     assert result
@@ -29,10 +30,10 @@ def run_train_main(mbag_config: dict, rllib_path: str):
 
 @convert_ex.named_config
 def blockassist_convert():
-    max_seq_len = 10
-    sequence_overlap = 2
+    max_seq_len = 32  # noqa: F841
+    inventory_player_indices = [0, 1] # noqa: F841
 
-    data_dir = _DEFAULT_CHECKPOINT  # noqa: F841
+    data_dir = _DEFAULT_CHECKPOINT
     data_glob = os.path.join(data_dir, "**", "episodes.zip")  # noqa: F841
     out_dir = os.path.join(data_dir, "..", "rllib")  # noqa: F841
 
