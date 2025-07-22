@@ -15,7 +15,7 @@ _LOG = get_logger()
 
 
 def get_all_evaluate_dirs(data_dir: Path) -> list[Path]:
-    checkpoint_dir = data_dir / "base_checkpoint"
+    checkpoint_dir = data_dir
     evaluate_dirs = [
         d
         for d in checkpoint_dir.iterdir()

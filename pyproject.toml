@@ -9,17 +9,17 @@ package-dir = { "" = "src" }
 
 [project]
 name = "blockassist"
-dynamic = ["version"]
 description = "Distributed experiments built using the MBAG multiagent environment (https://github.com/cassidylaidlaw/minecraft-building-assistance-game)."
 readme = "README.md"
-requires-python = ">=3.8,<3.11"
+requires-python = ">=3.10"
+version = "0.0.1"
 dependencies = [
   "aiofiles",
   "boto3",
   "datasets",
   "eth-account",
   "hydra-core",
-  "mbag-gensyn[malmo,rllib] @ git+https://github.com/gensyn-ai/minecraft-building-assistance-game.git@96d57776c3595c7ec94d115d05074051bc015f6a",
+  "mbag-gensyn[rllib,malmo]",
   "numpy>=1.21,<1.22",
   "requests",
   "six",

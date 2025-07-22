@@ -59,7 +59,7 @@ async def _main(cfg: DictConfig):
                     # TODO: Make timeout an arg to started/ended/etc.
                     await asyncio.wait_for(
                         minecraft_ctx.started(),
-                        timeout=60 * 2,  # minutes
+                        timeout=60 * 5,  # minutes
                     )
                     if not minecraft_ctx.any_game_crashed:
                         episode_runner = EpisodeRunner(human_alone=num_instances == 1)

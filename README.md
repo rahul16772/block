@@ -3,9 +3,86 @@
 Distributed extensions of the paper [AssistanceZero: Scalably Solving Assistance Games](https://arxiv.org/abs/2504.07091). Adds
 multiplayer interactions, distributed training modalities, model merging/uploading, and on-chain attribution.
 
+## Installation
+
+### Python
+
+First, you need to be running Python 3.10. It is recommended to install it with Pyenv.
+
+#### MacOS
+
+```bash
+brew update
+brew install pyenv
+pyenv init # Follow instructions from this command
+pyenv install 3.10
+pyenv shell 3.10
+```
+
+#### Linux
+
+```bash
+curl -fsSL https://pyenv.run | bash
+pyenv init # Follow instructions from this command
+pyenv install 3.10
+pyenv shell 3.10
+```
+
+### Java JDK 8u152
+
+Run the setup.sh script in the repo to install Java 8u152.
+
+```bash
+curl "https://raw.githubusercontent.com/gensyn-ai/blockassist-private/refs/heads/eamonn/ci/setup.sh" | bash
+```
+
+### BlockAssist
+
+Next, create a Python virtual environment install BlockAssist from Pip:
+
+```bash
+python -m venv blockassist-venv
+. blockassist-venv/bin/activate
+pip install blockassist
+```
+
+## Running
+
+After installing the dependencies, you're ready to launch!
+
+### Linux
+
+```bash
+python -m blockassist.launch
+```
+
+### MacOS
+
+```bash
+TMPDIR=/tmp/ python -m blockassist.launch
+```
+
+---
+# OUTDATED
+
 ## Setup
 
 ### Dependencies
+
+#### Java 8u152
+
+Install JDK 8u152 with the binaries available in the `bin` folder.
+
+On MacOS: Run the `jdk-8u152-macosx-x64.dmg` installer. If you encounter an error at the last step, don't worry, it has installed anyway.
+
+On Linux, unzip the `jdk-8u152-linux-x64.tar.gz` archive, and run the following:
+```bash
+sudo tar -xf /location-to-file/jdk1.8.0_202.tar.gz -C /opt
+echo "JAVA_PATH=/opt/jdk1.8.0_202" >> $HOME/.bashrc
+echo "PATH=$PATH:$JAVA_PATH/bin" >> $HOME/.bashrc
+```
+
+#### Python
 
 Supported Python versions: [3.8, 3.9, 3.10] (see [pyenv](https://github.com/pyenv/pyenv)).
 
