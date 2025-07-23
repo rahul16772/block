@@ -33,7 +33,7 @@ pyenv shell 3.10
 Run the setup.sh script in the repo to install Java 8u152.
 
 ```bash
-curl "https://raw.githubusercontent.com/gensyn-ai/blockassist-private/refs/heads/eamonn/ci/setup.sh" | bash
+curl "https://raw.githubusercontent.com/gensyn-ai/blockassist-private/refs/heads/main/setup.sh" | bash
 ```
 
 ### BlockAssist
@@ -62,35 +62,7 @@ python -m blockassist.launch
 TMPDIR=/tmp/ python -m blockassist.launch
 ```
 
----
-# OUTDATED
-
-## Setup
-
-### Dependencies
-
-#### Java 8u152
-
-Install JDK 8u152 with the binaries available in the `bin` folder.
-
-On MacOS: Run the `jdk-8u152-macosx-x64.dmg` installer. If you encounter an error at the last step, don't worry, it has installed anyway.
-
-On Linux, unzip the `jdk-8u152-linux-x64.tar.gz` archive, and run the following:
-```bash
-sudo tar -xf /location-to-file/jdk1.8.0_202.tar.gz -C /opt
-echo "JAVA_PATH=/opt/jdk1.8.0_202" >> $HOME/.bashrc
-echo "PATH=$PATH:$JAVA_PATH/bin" >> $HOME/.bashrc
-```
-
-#### Python
-
-Supported Python versions: [3.8, 3.9, 3.10] (see [pyenv](https://github.com/pyenv/pyenv)).
-
-Similar to the original MBAG [repository](https://github.com/cassidylaidlaw/minecraft-building-assistance-game) instructions, setup your Python environment by running:
-
-    pip install -e .
-
-You will also need to install Java JDK 8u152, which can be found [here](https://www.oracle.com/java/technologies/javase/javase8-archive-downloads.html).
+## Testing & Contributing
 
 ### Linting / Testing
 
