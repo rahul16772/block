@@ -73,8 +73,12 @@ def get_system_info():
         "ip": get_ip()
     }
 
-def push_telemetry_event_session(duration_ms: int, user_id: str, goal_pct=float):
-    if os.environ.get("DISABLE_TELEMETRY", "false").lower() != "false":
+
+def is_telemetry_disabled():
+    return os.environ.get("DISABLE_TELEMETRY", "false").lower() in ("true", "1", "yes")
+
+def push_telemetry_event_session(duration_ms: int, user_id: str, goal_pct: float):
+    if is_telemetry_disabled():
         return
 
     c = EventSession(
@@ -85,30 +89,28 @@ def push_telemetry_event_session(duration_ms: int, user_id: str, goal_pct=float)
         ip_addr=get_ip(),
         blockassist_version=BLOCKASSIST_VERSION
     )
-
     requests.post(TELEMETRY_API_EVENT_SESSION, json=dict(c))
-    
 
-def push_telemetry_event_trained(duration_ms: int, user_id: str, session_count=int):
-    if os.environ.get("DISABLE_TELEMETRY", "false").lower() != "false":
+
+def push_telemetry_event_trained(duration_ms: int, user_id: str, session_count: int):
+    if is_telemetry_disabled():
         return
-    
+
     c = EventModelTrained(
         timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         duration_ms=duration_ms,
         user_id=user_id,
         session_count=session_count,
-        hardware_dict=get_system_info(),
+        hardware_dict=json.dumps(get_system_info()),  # Convert dict to JSON string
         ip_addr=get_ip(),
         blockassist_version=BLOCKASSIST_VERSION
     )
-
     requests.post(TELEMETRY_API_EVENT_MODEL_TRAINED, json=dict(c))
 
-def push_telemetry_event_uploaded(size_bytes: int, user_id: str, huggingface_id=str):
-    if os.environ.get("DISABLE_TELEMETRY", "false").lower() != "false":
+def push_telemetry_event_uploaded(size_bytes: int, user_id: str, huggingface_id: str):
+    if is_telemetry_disabled():
         return
-    
+
     c = EventModelUploaded(
         timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         size_bytes=size_bytes,
@@ -117,5 +119,4 @@ def push_telemetry_event_uploaded(size_bytes: int, user_id: str, huggingface_id=
         ip_addr=get_ip(),
         blockassist_version=BLOCKASSIST_VERSION
     )
-
     requests.post(TELEMETRY_API_EVENT_MODEL_UPLOADED, json=dict(c))

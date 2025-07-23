@@ -2,12 +2,14 @@ import asyncio
 import os
 from pathlib import Path
 import shutil
+import time
 
 from mbag.environment.goals import ALL_GOAL_GENERATORS
 from mbag.scripts.convert_human_data_to_rllib import ex as convert_ex
 from mbag.scripts.train import ex as train_ex
 
-from blockassist.globals import _DATA_DIR, _DEFAULT_CHECKPOINT, get_logger
+from blockassist import telemetry
+from blockassist.globals import _DATA_DIR, _DEFAULT_CHECKPOINT, get_identifier, get_logger
 from blockassist.goals.generator import BlockAssistGoalGenerator
 
 _LOG = get_logger()
@@ -51,25 +53,40 @@ class TrainingRunner:
         self.training_started = asyncio.Event()
         self.training_ended = asyncio.Event()
 
-    def started(self):
-        return self.training_started.wait()
+        self.start_time = time.time()
+        self.end_time = None
 
-    def ended(self):
-        return self.training_ended.wait()
+    def wait_for_start(self, timeout=60 * 2): # minutes
+        return asyncio.wait_for(self.training_started.wait(), timeout)
 
-    def start(self):
+    def wait_for_end(self, timeout=60 * 60 * 24): # hours
+        return asyncio.wait_for(self.training_ended.wait(), timeout)
+
+    def before_training(self):
+        _LOG.info("Training started.")
         self.training_started.set()
 
         _LOG.info("Conversion started!")
         shutil.rmtree(Path(_DATA_DIR) / "rllib", ignore_errors=True)
-        convert_result = run_convert_main()
+        self.convert_result = run_convert_main()
+
+    def after_training(self):
+        _LOG.info("Training ended.")
+        self.end_time = time.time()
+        duration_ms = int((self.end_time - self.start_time) * 1000)
+        telemetry.push_telemetry_event_trained(
+            duration_ms, get_identifier(), 1 # TODO: Fix
+        )
+
+    def start(self):
+        self.before_training()
         try:
             _LOG.info("Training started!")
             run_train_main(
-                mbag_config=convert_result["mbag_config"],
-                rllib_path=convert_result["out_dir"],
+                mbag_config=self.convert_result["mbag_config"],
+                rllib_path=self.convert_result["out_dir"],
             )
         except KeyboardInterrupt:
             _LOG.info("Training stopped!")
-        finally:
-            self.training_ended.set()
+
+        self.after_training()

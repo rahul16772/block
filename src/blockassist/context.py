@@ -126,7 +126,7 @@ class MinecraftContext(LoggedProcessContext):
             + ["False" for _ in range(self.num_instances - 1)]
         )
 
-    def started(self):
+    def wait_for_start(self):
         tasks = list(
             map(
                 asyncio.create_task,
@@ -135,7 +135,7 @@ class MinecraftContext(LoggedProcessContext):
         )
         return asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
 
-    def ended(self):
+    def wait_for_end(self):
         tasks = list(
             map(
                 asyncio.create_task,

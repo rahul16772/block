@@ -1,13 +1,10 @@
 import asyncio
 import os
-import socket
 import sys
-import time
 
 import hydra
 from omegaconf import DictConfig
 
-from blockassist import telemetry
 from blockassist.context import (
     MinecraftContext,
     _log_dir,
@@ -38,8 +35,6 @@ def get_stages(cfg: DictConfig) -> list[str]:
 
 async def _main(cfg: DictConfig):
     # TODO: Fill in real telemetry values
-    # Specifically: `goal_pct` in session call
-    # `session_count` in training call
     # all values for upload
     try:
         if cfg["mode"] == "e2e":
@@ -47,27 +42,25 @@ async def _main(cfg: DictConfig):
 
         stages = get_stages(cfg)
         num_instances = cfg.get("num_instances", 2)
+        human_alone = num_instances == 1
 
         for stage in stages:
             if stage == "episode_full":
                 # Waits for new Minecraft windows + runs Malmo episode.
-                start = time.time()
                 _LOG.info("Starting episode recording!!")
-                async with MinecraftContext(
-                    num_instances=num_instances
-                ).start() as minecraft_ctx:
+                async with MinecraftContext(num_instances).start() as minecraft_ctx:
                     # TODO: Make timeout an arg to started/ended/etc.
-                    await asyncio.wait_for(
-                        minecraft_ctx.started(),
-                        timeout=60 * 5,  # minutes
-                    )
+                    await minecraft_ctx.wait_for_start()
                     if not minecraft_ctx.any_game_crashed:
-                        episode_runner = EpisodeRunner(human_alone=num_instances == 1)
+                        episode_runner = EpisodeRunner(human_alone)
                         episode_runner.start()
                         tasks = list(
                             map(
                                 asyncio.create_task,
-                                (minecraft_ctx.ended(), episode_runner.ended()),
+                                (
+                                    minecraft_ctx.wait_for_end(),
+                                    episode_runner.wait_for_end(),
+                                ),
                             )
                         )
                         await asyncio.wait(
@@ -83,26 +76,15 @@ async def _main(cfg: DictConfig):
             elif stage == "episode":
                 # Runs Malmo episode with existing Minecraft windows.
                 _LOG.info("Starting episode building only!!")
-                episode_runner = EpisodeRunner(human_alone=num_instances == 1)
+                episode_runner = EpisodeRunner(human_alone)
                 episode_runner.start()
-                await asyncio.wait_for(
-                    episode_runner.ended(),
-                    timeout=60 * 30,  # minutes
-                )
+                await episode_runner.wait_for_end()
 
             elif stage == "train":
-                start = time.time()
                 _LOG.info("Starting model training!!")
                 training_runner = TrainingRunner()
                 training_runner.start()
-                await asyncio.wait_for(
-                    training_runner.ended(),
-                    timeout=60 * 60 * 24,  # hours
-                )
-                duration_ms = int((time.time() - start) * 1000)
-                telemetry.push_telemetry_event_trained(
-                    duration_ms, socket.gethostname(), 1
-                )
+                await training_runner.wait_for_end()
 
             elif stage == "convert":
                 _LOG.info("Starting model conversion!!")
@@ -112,7 +94,8 @@ async def _main(cfg: DictConfig):
                     out_dir="mbag-repo/data/assistancezero_assistant_hf",
                     arch="custom",
                 )
-                telemetry.push_telemetry_event_uploaded(0, socket.gethostname(), "")
+                # TODO: Fix!!
+                # telemetry.push_telemetry_event_uploaded(0, socket.gethostname(), "")
 
     except Exception as e:
         _LOG.error("Recording session was stopped with exception", exc_info=e)
