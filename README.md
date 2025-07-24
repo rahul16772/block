@@ -90,6 +90,10 @@ TMPDIR=/tmp/ python -m blockassist.launch
 
 NOTE: The first time you run BlockAssist, it may take upwards of five minutes to launch. If you see an error from `asyncio` saying that it has timed out, just run the same command again.
 
+Minecraft will launch two windows. One window is the "assistant," and one window is your game. For more information on how to interact with the game, [click here]().
+
+# FIX THIS LINK
+
 ## Testing & Contributing
 
 ### Linting / Testing
