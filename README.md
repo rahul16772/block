@@ -14,7 +14,19 @@ First, you need to be running Python 3.10. It is recommended to install it with 
 ```bash
 brew update
 brew install pyenv
-pyenv init # Follow instructions from this command
+```
+
+Now Pyenv is installed. Run the following command, and **follow the instructions** it displays
+
+```bash
+pyenv init # Follow the instructions from this command
+```
+
+For example, it may ask you to update your .zshrc.
+
+Once that is done, you can install Python 3.10.
+
+```
 pyenv install 3.10
 pyenv shell 3.10
 ```
@@ -23,7 +35,19 @@ pyenv shell 3.10
 
 ```bash
 curl -fsSL https://pyenv.run | bash
-pyenv init # Follow instructions from this command
+```
+
+Now Pyenv is installed. Run the following command, and **follow the instructions** it displays
+
+```bash
+pyenv init # Follow the instructions from this command
+```
+
+For example, it may ask you to update your .zshrc.
+
+Once that is done, you can install Python 3.10.
+
+```
 pyenv install 3.10
 pyenv shell 3.10
 ```
