@@ -86,6 +86,10 @@ python -m blockassist.launch
 TMPDIR=/tmp/ python -m blockassist.launch
 ```
 
+## Waiting for Launch
+
+NOTE: The first time you run BlockAssist, it may take upwards of five minutes to launch. If you see an error from `asyncio` saying that it has timed out, just run the same command again.
+
 ## Testing & Contributing
 
 ### Linting / Testing
