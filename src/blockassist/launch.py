@@ -5,10 +5,6 @@ import sys
 import hydra
 from omegaconf import DictConfig
 
-from blockassist.context import (
-    MinecraftContext,
-    _log_dir,
-)
 from blockassist.distributed.hf import convert_checkpoint_to_hf
 from blockassist.episode import EpisodeRunner
 from blockassist.train import TrainingRunner
@@ -22,7 +18,7 @@ def get_stages(cfg: DictConfig) -> list[str]:
 
     if mode == "e2e":
         return [
-            "episode_full",
+            "episode",
             "train",
             "convert",
         ]
@@ -45,37 +41,8 @@ async def _main(cfg: DictConfig):
         human_alone = num_instances == 1
 
         for stage in stages:
-            if stage == "episode_full":
-                # Waits for new Minecraft windows + runs Malmo episode.
+            if stage == "episode":
                 _LOG.info("Starting episode recording!!")
-                async with MinecraftContext(num_instances).start() as minecraft_ctx:
-                    # TODO: Make timeout an arg to started/ended/etc.
-                    await minecraft_ctx.wait_for_start()
-                    if not minecraft_ctx.any_game_crashed:
-                        episode_runner = EpisodeRunner(human_alone)
-                        episode_runner.start()
-                        tasks = list(
-                            map(
-                                asyncio.create_task,
-                                (
-                                    minecraft_ctx.wait_for_end(),
-                                    episode_runner.wait_for_end(),
-                                ),
-                            )
-                        )
-                        await asyncio.wait(
-                            tasks,
-                            return_when=asyncio.FIRST_COMPLETED,
-                            timeout=60 * 30,  # minutes
-                        )
-                    else:
-                        raise RuntimeError(
-                            "A Minecraft instance crashed during launch."
-                        )
-
-            elif stage == "episode":
-                # Runs Malmo episode with existing Minecraft windows.
-                _LOG.info("Starting episode building only!!")
                 episode_runner = EpisodeRunner(human_alone)
                 episode_runner.start()
                 await episode_runner.wait_for_end()
@@ -104,9 +71,6 @@ async def _main(cfg: DictConfig):
 
 @hydra.main(version_base=None, config_path=".", config_name="config")
 def main(cfg: DictConfig) -> None:
-    if not _log_dir().exists():
-        _log_dir().mkdir(parents=True, exist_ok=True)
-
     asyncio.run(_main(cfg))
 
 
