@@ -56,6 +56,12 @@ export async function userOperationHandler({
 
   console.log(contractAddress);
 
+  console.log("encodeFunctionData inputs:", {
+    abi: contract.abi ? "present" : "missing",
+    functionName,
+    args: args.map((arg, i) => ({ index: i, value: arg, type: typeof arg, isUndefined: arg === undefined }))
+  });
+
   const userOperationResult = await sendUserOperation({
     execute: () =>
       client.sendUserOperation({
