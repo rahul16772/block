@@ -94,6 +94,42 @@ Minecraft will launch two windows. One window is the "assistant," and one window
 
 # FIX THIS LINK
 
+## Configuration
+
+BlockAssist uses Hydra for configuration management. You can modify settings in the `config.yaml` file or override them via command line arguments.
+
+### HuggingFace Token Configuration
+
+To upload trained models to HuggingFace, you need to configure your HuggingFace token. There are several ways to do this:
+
+#### Method 1: Configuration File
+
+Edit `src/blockassist/config.yaml` and set your token:
+
+```yaml
+mode: e2e
+hf_token: "hf_your_token_here"
+```
+
+#### Method 2: Command Line Override
+
+Pass the token as a command line argument:
+
+```bash
+python -m blockassist.launch hf_token="hf_your_token_here"
+```
+
+#### Method 3: Environment Variable
+
+Set the HuggingFace Hub token as an environment variable:
+
+```bash
+export HUGGINGFACE_HUB_TOKEN="hf_your_token_here"
+python -m blockassist.launch
+```
+
+**Note:** If no token is provided, the system will attempt to use HuggingFace Hub's default authentication mechanism. You can obtain a HuggingFace token from your [HuggingFace settings page](https://huggingface.co/settings/tokens).
+
 ## Testing & Contributing
 
 ### Linting / Testing
@@ -105,7 +141,6 @@ This project relies mostly on ruff for formatting/linting purposes. To format, s
 Pytest is used to run unit/integration tests. See below.
 
     pytest .
-    pytest -m "integration" .
 
 ## Flow
 
@@ -115,33 +150,17 @@ Individual commands are explained below, but you can also run `blockassist` in `
 
     python -m blockassist.launch
 
-### Startup
-
-To initiate the primary episode recording flow, execute the following in a terminal:
-
-    python -m blockassist.init
-
-Upon a successful startup, you will see a Minecraft window (waiting at the menu screen) and the following console output:
-
-    Hello world!
-
 ### Recording/Building
 
 Starts recording a single episode of the user building a randomly selected goal.
 
-    python -m blockassist.record
+    python -m blockassist.launch mode=episode
 
 ### Training
 
-Trains a model from a previously saved episode and saves it in HuggingFace format. Optionally uploads.
+Trains a model from a previously saved episode and saves it in HuggingFace format. Optionally uploads to HuggingFace if `hf_token` is configured.
 
-    python -m blockassist.train
-
-### Evaluation
-
-Evaluates the performance of a trained checkpoint against cross validated human data.
-
-    python -m blockassist.eval
+    python -m blockassist.launch mode=train
 
 ## Telemetry
 

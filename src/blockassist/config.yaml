@@ -1,1 +1,2 @@
 mode: e2e
+hf_token: null  # Set this to your HuggingFace token for uploads

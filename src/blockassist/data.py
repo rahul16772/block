@@ -5,7 +5,8 @@ import os
 import pickle
 import zipfile
 
-from blockassist.globals import get_logger
+from blockassist.globals import get_identifier, get_logger
+from blockassist.distributed.s3 import upload_zip_to_s3
 
 from mbag.evaluation.episode import MbagEpisode
 
@@ -123,3 +124,52 @@ def load_episodes_from_evaluate_dirs(
 
         _LOG.info(f"Loaded {len(episodes)} episodes from {evaluate_dirs}")
         return episodes
+
+
+def zip_and_upload_episodes(data_dir: Path, bucket_name: str) -> list[str]:
+    """
+    Zip all episode directories and upload them to S3.
+
+    Args:
+        data_dir: Path to the data directory containing evaluate_ directories
+        bucket_name: S3 bucket name for upload
+
+    Returns:
+        List of S3 URIs of the uploaded zip files
+    """
+    if not data_dir.exists():
+        raise FileNotFoundError(f"Data directory does not exist: {data_dir}")
+
+    # Get all evaluate directories
+    evaluate_dirs = get_all_evaluate_dirs(data_dir)
+    if not evaluate_dirs:
+        raise ValueError(f"No timestamped evaluation directories found in {data_dir}")
+
+    s3_uris = []
+    for evaluate_dir in evaluate_dirs:
+        _LOG.info(f"Processing evaluation directory: {evaluate_dir}")
+
+        # Create zip file of the directory
+        zip_filename = f"{evaluate_dir.name}.zip"
+        zip_path = data_dir / zip_filename
+
+        # Remove existing zip if it exists
+        if zip_path.exists():
+            zip_path.unlink()
+
+        _LOG.info(f"Creating zip file: {zip_path}")
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+            for file_path in evaluate_dir.rglob("*"):
+                if file_path.is_file():
+                    # Calculate relative path for the zip
+                    arcname = file_path.relative_to(evaluate_dir)
+                    zipf.write(file_path, arcname)
+
+        zip_size_mb = zip_path.stat().st_size / 1024 / 1024
+        _LOG.info(f"Created zip file: {zip_path} (size: {zip_size_mb:.2f} MB)")
+
+        # Upload to S3
+        s3_uri = upload_zip_to_s3(str(zip_path), bucket_name, f"{get_identifier()}/{zip_filename}")
+        s3_uris.append(s3_uri)
+
+    return s3_uris

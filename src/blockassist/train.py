@@ -4,18 +4,20 @@ from pathlib import Path
 import shutil
 import time
 
+from huggingface_hub import login, whoami
 from mbag.environment.goals import ALL_GOAL_GENERATORS
 from mbag.scripts.convert_human_data_to_rllib import ex as convert_ex
 from mbag.scripts.train import ex as train_ex
 
 from blockassist import telemetry
+from blockassist.distributed.hf import upload_to_huggingface
 from blockassist.globals import _DATA_DIR, _DEFAULT_CHECKPOINT, get_identifier, get_logger
 from blockassist.goals.generator import BlockAssistGoalGenerator
 
 _LOG = get_logger()
 
 
-def run_train_main(mbag_config: dict, rllib_path: str):
+def run_train_main(mbag_config: dict, rllib_path: str, num_training_iters: int):
     ALL_GOAL_GENERATORS["blockassist"] = BlockAssistGoalGenerator
     result = train_ex.run(
         named_configs=["bc_human"],
@@ -23,7 +25,7 @@ def run_train_main(mbag_config: dict, rllib_path: str):
             "data_split": "human_with_assistant",
             "goal_generator": "blockassist",
             "input": rllib_path,
-            "num_training_iters": 1
+            "num_training_iters": num_training_iters
         },
     ).result
     assert result
@@ -49,7 +51,14 @@ def run_convert_main():
 class TrainingRunner:
     """Class for managing a Minecraft bot training session."""
 
-    def __init__(self):
+    def __init__(self, num_training_iters: int = 1, hf_token: str | None = None):
+        self.num_training_iters = num_training_iters
+
+        login(hf_token)
+        self.hf_token = hf_token
+        username = whoami(token=self.hf_token)["name"]
+        self.hf_repo_id = f"{username}/blockassist-bc"
+
         self.training_started = asyncio.Event()
         self.training_ended = asyncio.Event()
 
@@ -77,14 +86,23 @@ class TrainingRunner:
         telemetry.push_telemetry_event_trained(
             duration_ms, get_identifier(), 1 # TODO: Fix
         )
+        self.training_ended.set()
 
     def start(self):
         self.before_training()
         try:
             _LOG.info("Training started!")
-            run_train_main(
+            result = run_train_main(
                 mbag_config=self.convert_result["mbag_config"],
                 rllib_path=self.convert_result["out_dir"],
+                num_training_iters=self.num_training_iters
+            )
+            model_dir = result["final_checkpoint"]
+            upload_to_huggingface(
+                model_path=Path(model_dir),
+                user_id=get_identifier(),
+                repo_id=self.hf_repo_id,
+                hf_token=self.hf_token
             )
         except KeyboardInterrupt:
             _LOG.info("Training stopped!")

@@ -6,8 +6,8 @@ from mbag.environment.goals import ALL_GOAL_GENERATORS
 from mbag.scripts.evaluate import ex
 
 from blockassist import telemetry
-from blockassist.data import backup_existing_evaluate_dirs
-from blockassist.globals import _DATA_DIR, get_identifier, get_logger
+from blockassist.data import backup_existing_evaluate_dirs, zip_and_upload_episodes
+from blockassist.globals import _DATA_DIR, _DEFAULT_S3_BUCKET, get_identifier, get_logger
 from blockassist.goals.generator import BlockAssistGoalGenerator
 
 _LOG = get_logger()
@@ -106,8 +106,6 @@ class EpisodeRunner:
         self.end_time = time.time()
 
     def start(self):
-        # TODO: Fix early exit when Minecraft instances go down.
-
         _LOG.info("Backing up old evaluate directories.")
         backup_existing_evaluate_dirs(self.data_dir)
 
@@ -121,13 +119,11 @@ class EpisodeRunner:
                 _LOG.info(f"Episode {self.episode_count} recording stopped!")
 
         self.after_session()
-
-        # TODO: Fix uploading episodes to S3 post-backup flow.
-        # try:
-        #     zip_and_upload_latest_episode(
-        #         "data/base_checkpoint",
-        #         "blockassist-episode",
-        #     )
-        #     _LOG.info("Episode data uploaded successfully.")
-        # except boto3.exceptions.S3UploadFailedError:  # type: ignore
-        #     _LOG.error("Failed to upload episode data to S3.", exc_info=True)
+        try:
+            s3_uris = zip_and_upload_episodes(
+                self.data_dir,
+                _DEFAULT_S3_BUCKET,
+            )
+            _LOG.info(f"Episode data uploaded successfully to {s3_uris}")
+        except Exception as e:
+            _LOG.error(f"Failed to upload episode data to S3: {e}", exc_info=True)

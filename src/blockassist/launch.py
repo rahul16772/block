@@ -49,7 +49,8 @@ async def _main(cfg: DictConfig):
 
             elif stage == "train":
                 _LOG.info("Starting model training!!")
-                training_runner = TrainingRunner()
+                hf_token = cfg.get("hf_token")
+                training_runner = TrainingRunner(hf_token=hf_token)
                 training_runner.start()
                 await training_runner.wait_for_end()
 
