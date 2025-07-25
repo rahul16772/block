@@ -6,8 +6,8 @@ set -o pipefail
 ROOT="$PWD"
 DOCKER=${DOCKER:-""}
 
-# TODO: Get the actual address
-export SMART_CONTRACT_ADDRESS="0xFaD7C5e93f28257429569B854151A1B8DCD404c2"
+# This is an address good enough for testing.
+export SMART_CONTRACT_ADDRESS="0xa6834217923D7A2A0539575CFc67abA209E6436F"
 
 # Function to setup Node.js and NVM
 setup_node_nvm() {
