@@ -92,3 +92,16 @@ if [ -z "$DOCKER" ]; then
 else
     echo ">> Please open http://localhost:3000 in your host browser."
 fi
+
+cd ..
+
+echo ">> Waiting for modal userData.json to be created..."
+while [ ! -f "modal-login/temp-data/userData.json" ]; do
+    sleep 5  # Wait for 5 seconds before checking again
+done
+echo "Found userData.json. Proceeding..."
+
+ORG_ID=$(awk 'BEGIN { FS = "\"" } !/^[ \t]*[{}]/ { print $(NF - 1); exit }' modal-login/temp-data/userData.json)
+echo "Your ORG_ID is set to: $ORG_ID"
+
+# TODO: Kill the sever running at port 3000 once the job finishes
