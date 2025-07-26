@@ -70,9 +70,9 @@ def hf_login(cfg: DictConfig):
     return hf_token
 
 
-def get_hf_repo_id(hf_token: str):
+def get_hf_repo_id(hf_token: str, training_id: str):
     username = whoami(token=hf_token)["name"]
-    return f"{username}/blockassist-bc"
+    return f"{username}/blockassist-bc-{training_id}"
 
 
 async def _main(cfg: DictConfig):
@@ -141,7 +141,7 @@ async def _main(cfg: DictConfig):
                 _LOG.info("Starting model upload!!")
                 if model_dir:
                     hf_token = hf_login(cfg)
-                    hf_repo_id = get_hf_repo_id(hf_token)
+                    hf_repo_id = get_hf_repo_id(hf_token, training_id)
                     num_sessions = get_total_episodes(checkpoint_dir)
                     is_telemetry_enabled = not telemetry.is_telemetry_disabled()
                     upload_to_huggingface(
