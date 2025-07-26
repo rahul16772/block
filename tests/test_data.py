@@ -1,12 +1,11 @@
-import pytest
 import tempfile
-import zipfile
 from pathlib import Path
 
+import pytest
+
 from blockassist.data import (
+    backup_evaluate_dirs,
     get_all_evaluate_dirs,
-    backup_existing_evaluate_dirs,
-    get_all_evaluate_zips,
 )
 
 
@@ -19,7 +18,7 @@ class TestGetEvaluationDirs:
             checkpoint_dir = data_dir / "base_checkpoint"
             checkpoint_dir.mkdir()
 
-            result = get_all_evaluate_dirs(data_dir)
+            result = get_all_evaluate_dirs(checkpoint_dir)
             assert result == []
 
     def test_get_evaluation_dirs_with_evaluate_dirs(self):
@@ -38,7 +37,7 @@ class TestGetEvaluationDirs:
             # Create a file that starts with evaluate_ (should be ignored)
             (checkpoint_dir / "evaluate_file.txt").touch()
 
-            result = get_all_evaluate_dirs(data_dir)
+            result = get_all_evaluate_dirs(checkpoint_dir)
             result_names = [d.name for d in result]
 
             assert len(result) == 2
@@ -65,7 +64,7 @@ class TestGetEvaluationDirs:
             (checkpoint_dir / "evaluate_file.txt").touch()
             (checkpoint_dir / "regular_file.txt").touch()
 
-            result = get_all_evaluate_dirs(data_dir)
+            result = get_all_evaluate_dirs(checkpoint_dir)
             result_names = [d.name for d in result]
 
             assert len(result) == 2
@@ -94,10 +93,10 @@ class TestBackupExistingEvaluateDirs:
             (eval_dir1 / "subdir" / "nested_file.txt").write_text("nested content")
 
             # Call backup function
-            backup_existing_evaluate_dirs(data_dir)
+            backup_evaluate_dirs(str(checkpoint_dir))
 
-            # Verify backup directories were created (data_dir/evaluate/evaluate_name/)
-            evaluate_root = data_dir / "evaluate"
+            # Verify backup directories were created (checkpoint_dir/evaluate/evaluate_name/)
+            evaluate_root = checkpoint_dir / "evaluate"
             assert evaluate_root.exists()
             assert evaluate_root.is_dir()
 
@@ -118,8 +117,10 @@ class TestBackupExistingEvaluateDirs:
         """Test that backup raises FileNotFoundError for nonexistent data directory."""
         nonexistent_path = Path("/nonexistent/path")
 
-        with pytest.raises(FileNotFoundError, match="Data directory does not exist"):
-            backup_existing_evaluate_dirs(nonexistent_path)
+        with pytest.raises(
+            FileNotFoundError, match="Checkpoint directory does not exist"
+        ):
+            backup_evaluate_dirs(str(nonexistent_path))
 
     def test_backup_existing_evaluate_dirs_no_evaluate_dirs(self):
         """Test backup when no evaluate directories exist (should not fail)."""
@@ -133,110 +134,8 @@ class TestBackupExistingEvaluateDirs:
             (checkpoint_dir / "regular_file.txt").touch()
 
             # Should not raise an exception
-            backup_existing_evaluate_dirs(data_dir)
+            backup_evaluate_dirs(str(checkpoint_dir))
 
             # evaluate directory should not be created if no evaluate dirs exist
-            evaluate_dir = data_dir / "evaluate"
+            evaluate_dir = checkpoint_dir / "evaluate"
             assert not evaluate_dir.exists()
-
-
-class TestGetAllEvaluateZips:
-    def test_get_all_evaluate_zips_success(self):
-        """Test successful creation of zip files from all evaluate directories."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            data_dir = Path(temp_dir)
-            checkpoint_dir = data_dir / "base_checkpoint"
-            checkpoint_dir.mkdir()
-
-            # Create evaluate directories with content
-            eval_dir1 = checkpoint_dir / "evaluate_20250101_120000"
-            eval_dir2 = checkpoint_dir / "evaluate_20250102_130000"
-            eval_dir1.mkdir()
-            eval_dir2.mkdir()
-
-            # Add content to directories
-            (eval_dir1 / "results1.json").write_text('{"old": "data"}')
-            (eval_dir2 / "results2.json").write_text('{"new": "data"}')
-            (eval_dir2 / "subdir").mkdir()
-            (eval_dir2 / "subdir" / "nested.txt").write_text("nested content")
-
-            result = get_all_evaluate_zips(data_dir)
-
-            # Verify zip files were created in the data_dir
-            assert len(result) == 2
-            expected_zip_names = {"evaluate_20250101_120000.zip", "evaluate_20250102_130000.zip"}
-            actual_zip_names = {zip_path.name for zip_path in result}
-            assert actual_zip_names == expected_zip_names
-
-            # Verify all zip files exist
-            for zip_path in result:
-                assert zip_path.exists()
-                assert zip_path.parent == data_dir
-
-            # Verify zip contents for one of them
-            eval1_zip = data_dir / "evaluate_20250101_120000.zip"
-            with zipfile.ZipFile(eval1_zip, "r") as zipf:
-                zip_contents = zipf.namelist()
-                assert "results1.json" in zip_contents
-                assert zipf.read("results1.json").decode() == '{"old": "data"}'
-
-            eval2_zip = data_dir / "evaluate_20250102_130000.zip"
-            with zipfile.ZipFile(eval2_zip, "r") as zipf:
-                zip_contents = zipf.namelist()
-                assert "results2.json" in zip_contents
-                assert "subdir/nested.txt" in zip_contents
-                assert zipf.read("results2.json").decode() == '{"new": "data"}'
-                assert zipf.read("subdir/nested.txt").decode() == "nested content"
-
-    def test_get_all_evaluate_zips_nonexistent_data_dir(self):
-        """Test that function raises FileNotFoundError for nonexistent data directory."""
-        nonexistent_path = Path("/nonexistent/path")
-
-        with pytest.raises(FileNotFoundError, match="Data directory does not exist"):
-            get_all_evaluate_zips(nonexistent_path)
-
-    def test_get_all_evaluate_zips_no_evaluate_dirs(self):
-        """Test that function raises ValueError when no evaluate directories exist."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            data_dir = Path(temp_dir)
-            checkpoint_dir = data_dir / "base_checkpoint"
-            checkpoint_dir.mkdir()
-
-            # Create some non-evaluate directories
-            (checkpoint_dir / "other_dir").mkdir()
-            (checkpoint_dir / "regular_file.txt").touch()
-
-            with pytest.raises(
-                ValueError, match="No timestamped evaluation directories found"
-            ):
-                get_all_evaluate_zips(data_dir)
-
-    def test_get_all_evaluate_zips_replaces_existing_zip(self):
-        """Test that existing zip files are replaced."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            data_dir = Path(temp_dir)
-            checkpoint_dir = data_dir / "base_checkpoint"
-            checkpoint_dir.mkdir()
-
-            # Create evaluate directory
-            eval_dir = checkpoint_dir / "evaluate_test"
-            eval_dir.mkdir()
-            (eval_dir / "new_content.txt").write_text("new content")
-
-            # Create existing zip file
-            existing_zip = data_dir / "evaluate_test.zip"
-            with zipfile.ZipFile(existing_zip, "w") as zipf:
-                zipf.writestr("old_content.txt", "old content")
-
-            result = get_all_evaluate_zips(data_dir)
-
-            # Verify new zip was created
-            assert len(result) == 1
-            assert result[0] == existing_zip
-            assert existing_zip.exists()
-
-            # Verify content is new (not old)
-            with zipfile.ZipFile(existing_zip, "r") as zipf:
-                zip_contents = zipf.namelist()
-                assert "new_content.txt" in zip_contents
-                assert "old_content.txt" not in zip_contents

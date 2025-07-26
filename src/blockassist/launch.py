@@ -1,71 +1,168 @@
 import asyncio
 import os
 import sys
+from enum import Enum
+from pathlib import Path
 
 import hydra
+from huggingface_hub import login, whoami
 from omegaconf import DictConfig
 
-from blockassist.distributed.hf import convert_checkpoint_to_hf
+from blockassist import telemetry
+from blockassist.blockchain.coordinator import ModalSwarmCoordinator
+from blockassist.data import (
+    backup_evaluate_dirs,
+    delete_evaluate_dirs,
+    delete_evaluate_zips,
+    get_total_episodes,
+    restore_evaluate_dirs_from_backup,
+    zip_and_upload_episodes,
+)
+from blockassist.distributed.hf import upload_to_huggingface
 from blockassist.episode import EpisodeRunner
+from blockassist.globals import (
+    _DEFAULT_CHECKPOINT,
+    _DEFAULT_EPISODES_S3_BUCKET,
+    get_identifier,
+    get_logger,
+    get_training_id,
+)
 from blockassist.train import TrainingRunner
-from blockassist.globals import get_logger
 
 _LOG = get_logger()
 
 
-def get_stages(cfg: DictConfig) -> list[str]:
+class Stage(Enum):
+    BACKUP_EVALUATE = "backup_evaluate"
+    CLEAN_EVALUATE = "clean_evaluate"
+    RESTORE_BACKUP = "restore_backup"
+    EPISODE = "episode"
+    UPLOAD_EPISODES = "upload_episodes"
+    TRAIN = "train"
+    UPLOAD_MODEL = "upload_model"
+
+
+_ALL_STAGES = [
+    Stage.BACKUP_EVALUATE,
+    Stage.CLEAN_EVALUATE,
+    Stage.EPISODE,
+    Stage.UPLOAD_EPISODES,
+    Stage.TRAIN,
+    Stage.UPLOAD_MODEL,
+]
+
+
+def get_stages(cfg: DictConfig) -> list[Stage]:
+    # Overrides mode
+    if "stages" in cfg and cfg["stages"]:
+        return [Stage(stage) for stage in cfg["stages"]]
+
     mode = cfg["mode"]
-
     if mode == "e2e":
-        return [
-            "episode",
-            "train",
-            "convert",
-        ]
-    elif mode in ("episode", "train", "convert"):
-        return [mode]
+        return _ALL_STAGES
 
-    _LOG.error(f"Unknown script mode: {mode}")
     return []
 
 
+def hf_login(cfg: DictConfig):
+    hf_token = cfg.get("hf_token")
+    login(hf_token)
+    return hf_token
+
+
+def get_hf_repo_id(hf_token: str):
+    username = whoami(token=hf_token)["name"]
+    return f"{username}/blockassist-bc"
+
+
 async def _main(cfg: DictConfig):
-    # TODO: Fill in real telemetry values
-    # all values for upload
     try:
         if cfg["mode"] == "e2e":
             _LOG.info("Starting full recording session!!")
 
-        stages = get_stages(cfg)
-        num_instances = cfg.get("num_instances", 2)
-        human_alone = num_instances == 1
+        # Chain configuration
+        org_id = cfg.get("org_id")
+        address_eoa = cfg.get("address_eoa")
+        if not org_id or not address_eoa:
+            raise ValueError("Missing org_id or address_eoa in configuration.")
 
+        coordinator = ModalSwarmCoordinator(org_id)
+        training_id = get_training_id(address_eoa)
+
+        # Training configuration
+        num_instances = cfg.get("num_instances", 2)
+        checkpoint_dir = cfg.get("checkpoint_dir", _DEFAULT_CHECKPOINT)
+        model_dir = cfg.get("model_dir", "")
+
+        stages = get_stages(cfg)
         for stage in stages:
-            if stage == "episode":
+            if stage == Stage.BACKUP_EVALUATE:
+                _LOG.info("Backing up existing evaluation directories!!")
+                backup_evaluate_dirs(checkpoint_dir)
+
+            elif stage == Stage.CLEAN_EVALUATE:
+                _LOG.info("Cleaning up evaluation directories and zip files!!")
+                delete_evaluate_dirs(checkpoint_dir)
+                delete_evaluate_zips(checkpoint_dir)
+
+            elif stage == Stage.RESTORE_BACKUP:
+                _LOG.info("Restoring backup evaluation directories!!")
+                restore_evaluate_dirs_from_backup(checkpoint_dir)
+
+            elif stage == Stage.EPISODE:
                 _LOG.info("Starting episode recording!!")
-                episode_runner = EpisodeRunner(human_alone)
+                episode_runner = EpisodeRunner(
+                    checkpoint_dir,
+                    human_alone=num_instances == 1,
+                )
                 episode_runner.start()
                 await episode_runner.wait_for_end()
 
-            elif stage == "train":
+            elif stage == Stage.UPLOAD_EPISODES:
+                _LOG.info("Uploading episode zips!")
+                s3_uris = zip_and_upload_episodes(
+                    checkpoint_dir,
+                    _DEFAULT_EPISODES_S3_BUCKET,
+                )
+                _LOG.info(
+                    f"Episode data uploaded successfully! Uploaded {len(s3_uris)} files."
+                )
+
+            elif stage == Stage.TRAIN:
                 _LOG.info("Starting model training!!")
-                hf_token = cfg.get("hf_token")
-                org_id = cfg.get("org_id")
-                address_eoa = cfg.get("address_eoa")
-                training_runner = TrainingRunner(org_id=org_id, address_eoa=address_eoa, hf_token=hf_token)
+                training_runner = TrainingRunner(num_training_iters=1)
                 training_runner.start()
+                model_dir = training_runner.model_dir
                 await training_runner.wait_for_end()
 
-            elif stage == "convert":
-                _LOG.info("Starting model conversion!!")
-                # TODO: Fix!!
-                convert_checkpoint_to_hf(
-                    checkpoint_dir="mbag-repo/data/assistancezero_assistant/checkpoint-002000",
-                    out_dir="mbag-repo/data/assistancezero_assistant_hf",
-                    arch="custom",
-                )
-                # TODO: Fix!!
-                # telemetry.push_telemetry_event_uploaded(0, socket.gethostname(), "")
+            elif stage == Stage.UPLOAD_MODEL:
+                _LOG.info("Starting model upload!!")
+                if model_dir:
+                    hf_token = hf_login(cfg)
+                    hf_repo_id = get_hf_repo_id(hf_token)
+                    num_sessions = get_total_episodes(checkpoint_dir)
+                    is_telemetry_enabled = not telemetry.is_telemetry_disabled()
+                    upload_to_huggingface(
+                        model_path=Path(model_dir),
+                        user_id=get_identifier(),
+                        repo_id=hf_repo_id,
+                        hf_token=hf_token,
+                        chain_metadata_dict={
+                            "EOA": address_eoa,
+                            "TrainingId": training_id,
+                            "NumSessions": num_sessions,
+                            "Telemetry": is_telemetry_enabled,
+                        },
+                    )
+                    coordinator.submit_hf_upload(
+                        training_id=training_id,
+                        hf_id=hf_repo_id,
+                        num_sessions=num_sessions,
+                        telemetry_enabled=is_telemetry_enabled,
+                    )
+                else:
+                    _LOG.warning("No model directory specified, skipping upload.")
+                    continue
 
     except Exception as e:
         _LOG.error("Recording session was stopped with exception", exc_info=e)

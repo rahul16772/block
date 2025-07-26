@@ -1,17 +1,17 @@
 import asyncio
-from pathlib import Path
 import time
 
 from mbag.environment.goals import ALL_GOAL_GENERATORS
 from mbag.scripts.evaluate import ex
+from sacred.observers import FileStorageObserver
 
 from blockassist import telemetry
-from blockassist.data import backup_existing_evaluate_dirs, zip_and_upload_episodes
-from blockassist.globals import _DATA_DIR, _DEFAULT_S3_BUCKET, get_identifier, get_logger
+from blockassist.globals import _DEFAULT_CHECKPOINT, get_identifier, get_logger
 from blockassist.goals.generator import BlockAssistGoalGenerator
 
 _LOG = get_logger()
 
+ex.observers.append(FileStorageObserver.create("episode_runs"))
 
 @ex.named_config
 def blockassist():
@@ -42,7 +42,7 @@ def run_main():
     ALL_GOAL_GENERATORS["blockassist"] = BlockAssistGoalGenerator
     result = ex.run(
         named_configs=["human_with_assistant", "blockassist"],
-        config_updates={"assistant_checkpoint": "data/base_checkpoint"},
+        config_updates={"assistant_checkpoint": _DEFAULT_CHECKPOINT},
     ).result
     assert result
     return result
@@ -53,13 +53,11 @@ class EpisodeRunner:
 
     def __init__(
         self,
+        checkpoint_dir: str,
         human_alone: bool = True,
-        assistant_checkpoint: str = "data/base_checkpoint",
     ):
-        self.data_dir = Path(_DATA_DIR)
-
         self.human_alone = human_alone
-        self.assistant_checkpoint = assistant_checkpoint
+        self.checkpoint_dir = checkpoint_dir
 
         self.completed_episode_count = 0
         self.episode_count = 1
@@ -70,10 +68,10 @@ class EpisodeRunner:
         self.building_started = asyncio.Event()
         self.building_ended = asyncio.Event()
 
-    def wait_for_start(self, timeout=60 * 2): # minutes
+    def wait_for_start(self, timeout=60 * 2):  # minutes
         return asyncio.wait_for(self.building_started.wait(), timeout)
 
-    def wait_for_end(self, timeout=60 * 2): # hours
+    def wait_for_end(self, timeout=60 * 2):  # hours
         return asyncio.wait_for(self.building_ended.wait(), timeout)
 
     def get_last_goal_percentage_min(self, result):
@@ -106,9 +104,6 @@ class EpisodeRunner:
         self.end_time = time.time()
 
     def start(self):
-        _LOG.info("Backing up old evaluate directories.")
-        backup_existing_evaluate_dirs(self.data_dir)
-
         self.before_session()
         for _ in range(self.episode_count):
             try:
@@ -119,11 +114,3 @@ class EpisodeRunner:
                 _LOG.info(f"Episode {self.episode_count} recording stopped!")
 
         self.after_session()
-        try:
-            s3_uris = zip_and_upload_episodes(
-                self.data_dir,
-                _DEFAULT_S3_BUCKET,
-            )
-            _LOG.info(f"Episode data uploaded successfully to {s3_uris}")
-        except Exception as e:
-            _LOG.error(f"Failed to upload episode data to S3: {e}", exc_info=True)

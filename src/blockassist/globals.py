@@ -1,12 +1,12 @@
 import logging
 import socket
+import time
+
+from blockassist.blockchain.names import get_name_from_str
 
 _DATA_DIR = "data"
 _DEFAULT_CHECKPOINT = f"{_DATA_DIR}/base_checkpoint"
-
-# S3 Configuration
-_DEFAULT_S3_BUCKET = "blockassist-episodes"
-_DEFAULT_HF_MODEL_TMPL = "blockassist/model"
+_DEFAULT_EPISODES_S3_BUCKET = "blockassist-episode"
 
 _LOG = None
 
@@ -23,6 +23,11 @@ def get_hostname() -> str:
 def get_ip(hostname = get_hostname()) -> str:
     return socket.gethostbyname(hostname)
 
-def get_identifier() -> str:
-    """Return identifier based on uname and IP address."""
-    return f"{get_hostname()}_{get_ip()}"
+def get_identifier(address_eoa: str = "") -> str:
+    if not address_eoa:
+        return f"{get_hostname()}_{get_ip()}"
+
+    return get_name_from_str(address_eoa).replace(" ", "_")
+
+def get_training_id(address_eoa: str) -> str:
+    return f"{get_identifier(address_eoa)}_{int(time.time())}"

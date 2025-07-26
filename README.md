@@ -154,13 +154,13 @@ Individual commands are explained below, but you can also run `blockassist` in `
 
 Starts recording a single episode of the user building a randomly selected goal.
 
-    python -m blockassist.launch mode=episode
+    python -m blockassist.launch "+stages=[episode]"
 
 ### Training
 
 Trains a model from a previously saved episode and saves it in HuggingFace format. Optionally uploads to HuggingFace if `hf_token` is configured.
 
-    python -m blockassist.launch mode=train
+    python -m blockassist.launch "+stages=[train]"
 
 ## Telemetry
 

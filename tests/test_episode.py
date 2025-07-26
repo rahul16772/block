@@ -7,12 +7,12 @@ from blockassist.episode import EpisodeRunner
 
 class TestEpisodeRunnerUtils:
     def test_get_last_goal_percentage_min_empty_dict(self):
-        runner = EpisodeRunner()
+        runner = EpisodeRunner("dummy_checkpoint_dir")
         result = {}
         assert runner.get_last_goal_percentage_min(result) == 0.0
 
     def test_get_last_goal_percentage_min_multiple_keys(self):
-        runner = EpisodeRunner()
+        runner = EpisodeRunner("dummy_checkpoint_dir")
         result = {
             "goal_percentage_1_min": 0.25,
             "goal_percentage_5_min": 0.75,
@@ -21,7 +21,7 @@ class TestEpisodeRunnerUtils:
         assert runner.get_last_goal_percentage_min(result) == 0.90
 
     def test_get_last_goal_percentage_min_mixed_keys(self):
-        runner = EpisodeRunner()
+        runner = EpisodeRunner("dummy_checkpoint_dir")
         result = {
             "goal_percentage_3_min": 0.50,
             "other_metric": 1.0,
@@ -31,7 +31,7 @@ class TestEpisodeRunnerUtils:
         assert runner.get_last_goal_percentage_min(result) == 0.85
 
     def test_get_last_goal_percentage_min_zero_minute(self):
-        runner = EpisodeRunner()
+        runner = EpisodeRunner("dummy_checkpoint_dir")
         result = {"goal_percentage_0_min": 0.10, "goal_percentage_5_min": 0.60}
         assert runner.get_last_goal_percentage_min(result) == 0.60
 
@@ -41,13 +41,11 @@ class TestEpisodeRunnerTelemetry:
     def common_patches(self):
         """Common patches used across multiple test methods."""
         with patch("blockassist.episode.telemetry.push_telemetry_event_session") as mock_telemetry_session, \
-             patch("blockassist.episode.backup_existing_evaluate_dirs") as mock_backup, \
              patch("blockassist.episode.get_identifier") as mock_get_identifier, \
              patch("blockassist.episode.run_main") as mock_main, \
              patch("time.time") as mock_time:
             yield {
                 "mock_telemetry_session": mock_telemetry_session,
-                "mock_backup": mock_backup,
                 "mock_get_identifier": mock_get_identifier,
                 "mock_main": mock_main,
                 "mock_time": mock_time
@@ -83,11 +81,10 @@ class TestEpisodeRunnerTelemetry:
             }
         )
 
-        runner = EpisodeRunner()
+        runner = EpisodeRunner("dummy_checkpoint_dir")
         runner.start()
 
         # Note: mock_backup is accessed via common_patches in assertions
-        common_patches["mock_backup"].assert_called_once_with(runner.data_dir)
         common_patches["mock_main"].assert_called_once()
         mock_telemetry_session.assert_called_once_with(
             5500,  # duration_ms: (1005.5 - 1000.0) * 1000
@@ -106,7 +103,7 @@ class TestEpisodeRunnerTelemetry:
             main_return_value={"other_metric": 1.0, "success": True}
         )
 
-        runner = EpisodeRunner()
+        runner = EpisodeRunner("dummy_checkpoint_dir")
         runner.start()
 
         mock_telemetry_session.assert_called_once_with(
@@ -136,7 +133,7 @@ class TestEpisodeRunnerTelemetry:
             main_side_effect=mock_main_side_effect
         )
 
-        runner = EpisodeRunner()
+        runner = EpisodeRunner("dummy_checkpoint_dir")
         runner.start()
 
         common_patches["mock_main"].assert_called_once()
@@ -157,7 +154,7 @@ class TestEpisodeRunnerTelemetry:
             main_side_effect=[{"goal_percentage_3_min": 0.30}, {"goal_percentage_7_min": 0.70}]
         )
 
-        runner = EpisodeRunner()
+        runner = EpisodeRunner("dummy_checkpoint_dir")
         runner.episode_count = 2  # Set to run 2 episodes
         runner.start()
 
@@ -190,9 +187,8 @@ class TestEpisodeRunnerTelemetry:
             main_side_effect=KeyboardInterrupt("Immediate stop")
         )
 
-        runner = EpisodeRunner()
+        runner = EpisodeRunner("dummy_checkpoint_dir")
         runner.start()
 
-        common_patches["mock_backup"].assert_called_once_with(runner.data_dir)
         common_patches["mock_main"].assert_called_once()
         mock_telemetry_session.assert_not_called()

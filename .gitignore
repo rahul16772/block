@@ -84,7 +84,7 @@ ipython_config.py
 
 # pyenv
 #   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
+#   intended to run in multiple environmen ts; otherwise, check them in:
 # .python-version
 
 # pipenv
@@ -210,7 +210,12 @@ __marimo__/
 .streamlit/secrets.toml
 
 ## Project
+modal-login/*
 data/base_checkpoint/evaluate*
 data/evaluate/
+data/rllib/
+episode_runs/
+convert_runs/
+train_runs/
 outputs/
 logs/

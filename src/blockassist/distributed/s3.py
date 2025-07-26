@@ -11,7 +11,6 @@ def upload_zip_to_s3(
     zip_file_path: str, bucket_name: str, s3_key: str | None = None
 ) -> str:
     zip_path = Path(zip_file_path)
-
     if not zip_path.exists():
         raise FileNotFoundError(f"Zip file does not exist: {zip_path}")
 
@@ -19,11 +18,8 @@ def upload_zip_to_s3(
     if s3_key is None:
         s3_key = zip_path.name
 
-    _LOG.info(f"Uploading {zip_path} to S3 bucket {bucket_name} with key {s3_key}")
-
-    s3_client = boto3.client("s3")
-
     try:
+        s3_client = boto3.client("s3")
         s3_client.upload_file(str(zip_path), bucket_name, s3_key)
         s3_uri = f"s3://{bucket_name}/{s3_key}"
         _LOG.info(f"Successfully uploaded to {s3_uri}")
@@ -31,3 +27,4 @@ def upload_zip_to_s3(
     except Exception as e:
         _LOG.error(f"Failed to upload {zip_path} to S3: {e}")
         raise
+

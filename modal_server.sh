@@ -12,7 +12,7 @@ export SMART_CONTRACT_ADDRESS="0xa6834217923D7A2A0539575CFc67abA209E6436F"
 # Function to setup Node.js and NVM
 setup_node_nvm() {
     echo "Setting up Node.js and NVM..."
-    
+
     if ! command -v node > /dev/null 2>&1; then
         echo "Node.js not found. Installing NVM and latest Node.js..."
         export NVM_DIR="$HOME/.nvm"
@@ -44,7 +44,7 @@ setup_node_nvm() {
 # Function to setup environment file
 setup_environment() {
     echo "Setting up environment configuration..."
-    
+
     ENV_FILE="$ROOT"/modal-login/.env
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS version
@@ -53,7 +53,7 @@ setup_environment() {
         # Linux version
         sed -i "3s/.*/SMART_CONTRACT_ADDRESS=$SMART_CONTRACT_ADDRESS/" "$ENV_FILE"
     fi
-    
+
     echo "Environment file updated with SMART_CONTRACT_ADDRESS: $SMART_CONTRACT_ADDRESS"
 }
 
@@ -102,7 +102,6 @@ done
 echo "Found userData.json. Proceeding..."
 
 export BA_ORG_ID=$(awk 'BEGIN { FS = "\"" } !/^[ \t]*[{}]/ { print $(NF - 1); exit }' modal-login/temp-data/userData.json)
-
 export BA_ADDRESS_EOA=$(awk -F'"' '/"address"/ { print $4; exit }' modal-login/temp-data/userData.json)
 
 # TODO: Kill the sever running at port 3000 once the job finishes
