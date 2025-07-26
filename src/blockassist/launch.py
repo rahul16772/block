@@ -89,6 +89,10 @@ async def _main(cfg: DictConfig):
         coordinator = ModalSwarmCoordinator(org_id)
         training_id = get_training_id(address_eoa)
 
+        # Check that HF token exists and is non-empty. 
+        if not cfg["hf_token"]:
+            raise ValueError("Missing hf_token in configuration.")
+
         # Training configuration
         num_instances = cfg.get("num_instances", 2)
         checkpoint_dir = cfg.get("checkpoint_dir", _DEFAULT_CHECKPOINT)
