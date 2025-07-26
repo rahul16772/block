@@ -5,8 +5,6 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 package-dir = { "" = "src" }
 
-[tool.setuptools_scm]
-
 [project]
 name = "blockassist"
 description = "Distributed experiments built using the MBAG multiagent environment (https://github.com/cassidylaidlaw/minecraft-building-assistance-game)."
