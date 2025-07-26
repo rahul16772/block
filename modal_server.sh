@@ -101,7 +101,8 @@ while [ ! -f "modal-login/temp-data/userData.json" ]; do
 done
 echo "Found userData.json. Proceeding..."
 
-ORG_ID=$(awk 'BEGIN { FS = "\"" } !/^[ \t]*[{}]/ { print $(NF - 1); exit }' modal-login/temp-data/userData.json)
-echo "Your ORG_ID is set to: $ORG_ID"
+export BA_ORG_ID=$(awk 'BEGIN { FS = "\"" } !/^[ \t]*[{}]/ { print $(NF - 1); exit }' modal-login/temp-data/userData.json)
+
+export BA_ADDRESS_EOA=$(awk -F'"' '/"address"/ { print $4; exit }' modal-login/temp-data/userData.json)
 
 # TODO: Kill the sever running at port 3000 once the job finishes

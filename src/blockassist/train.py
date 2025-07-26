@@ -10,6 +10,7 @@ from mbag.scripts.convert_human_data_to_rllib import ex as convert_ex
 from mbag.scripts.train import ex as train_ex
 
 from blockassist import telemetry
+from blockassist.blockchain.coordinator import ModalSwarmCoordinator
 from blockassist.distributed.hf import upload_to_huggingface
 from blockassist.globals import _DATA_DIR, _DEFAULT_CHECKPOINT, get_identifier, get_logger
 from blockassist.goals.generator import BlockAssistGoalGenerator
@@ -51,9 +52,10 @@ def run_convert_main():
 class TrainingRunner:
     """Class for managing a Minecraft bot training session."""
 
-    def __init__(self, num_training_iters: int = 1, hf_token: str | None = None):
+    def __init__(self, org_id: str, address_eoa: str, num_training_iters: int = 1, hf_token: str | None = None):
         self.num_training_iters = num_training_iters
-
+        self.address_eoa = address_eoa
+        self.coordinator = ModalSwarmCoordinator(org_id)
         login(hf_token)
         self.hf_token = hf_token
         username = whoami(token=self.hf_token)["name"]
@@ -98,11 +100,28 @@ class TrainingRunner:
                 num_training_iters=self.num_training_iters
             )
             model_dir = result["final_checkpoint"]
+            training_id = get_identifier()
+            telemetry_enabled = not telemetry.is_telemetry_disabled()
+
+            # TODO: Change num_sessions along with every other place
+            chain_metadata_dict = {
+                "EOA": self.address_eoa,
+                "TrainingId": training_id,
+                "NumSessions": 1,
+                "Telemetry": telemetry_enabled
+            }
             upload_to_huggingface(
                 model_path=Path(model_dir),
                 user_id=get_identifier(),
                 repo_id=self.hf_repo_id,
+                chain_metadata_dict=chain_metadata_dict,
                 hf_token=self.hf_token
+            )
+            # TODO: Change num_sessions along with every other place
+            self.coordinator.submit_hf_upload(
+                training_id=get_identifier(), 
+                hf_id=self.hf_repo_id, num_sessions=1, 
+                telemetry_enabled=(not telemetry.is_telemetry_disabled())
             )
         except KeyboardInterrupt:
             _LOG.info("Training stopped!")

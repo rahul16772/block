@@ -9,7 +9,7 @@ from mbag.rllib.training_utils import (
 
 from blockassist.globals import get_logger
 from blockassist import telemetry
-
+import io
 import json
 
 
@@ -100,7 +100,7 @@ This model was trained using the Minecraft Building Assistant Game (MBAG) framew
     return out_dir
 
 
-def upload_to_huggingface(model_path: Path, user_id: str, repo_id: str, hf_token: str | None = None) -> None:
+def upload_to_huggingface(model_path: Path, user_id: str, repo_id: str, chain_metadata_dict: dict | None = None, hf_token: str | None = None) -> None:
     if not model_path.exists():
         raise FileNotFoundError(f"Model directory does not exist: {model_path}")
 
@@ -108,6 +108,17 @@ def upload_to_huggingface(model_path: Path, user_id: str, repo_id: str, hf_token
         api = HfApi(token=hf_token)
         api.create_repo(repo_id=repo_id, repo_type="model", exist_ok=True)
         api.upload_folder(repo_id=repo_id, repo_type="model", folder_path=model_path)
+
+        if chain_metadata_dict:
+            metadata_json = json.dumps(chain_metadata_dict, indent=2)
+            metadata_bytes = io.BytesIO(metadata_json.encode("utf-8"))
+            api.upload_file(
+                path_or_fileobj=metadata_bytes,
+                path_in_repo="gensyn.json",
+                repo_id=repo_id,
+                repo_type="model"
+            )
+            _LOG.info(f"Uploaded metadata dictionary")
 
         # Calculate total size
         total_size = sum(f.stat().st_size for f in model_path.rglob("*") if f.is_file())
