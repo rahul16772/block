@@ -23,10 +23,7 @@ def get_hostname() -> str:
 def get_ip(hostname = get_hostname()) -> str:
     return socket.gethostbyname(hostname)
 
-def get_identifier(address_eoa: str = "") -> str:
-    if not address_eoa:
-        return f"{get_hostname()}_{get_ip()}"
-
+def get_identifier(address_eoa: str) -> str:
     return get_name_from_str(address_eoa).replace(" ", "_")
 
 def get_training_id(address_eoa: str) -> str:

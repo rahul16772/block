@@ -74,17 +74,19 @@ pip install blockassist
 
 After installing the dependencies, you're ready to launch!
 
-### Linux
+Simply run the launch script, which will handle both modal server setup and BlockAssist launch:
 
 ```bash
-python -m blockassist.launch
+./run_launch.sh
 ```
 
-### MacOS
+This script will:
 
-```bash
-TMPDIR=/tmp/ python -m blockassist.launch
-```
+1. Set up and run the modal login server
+2. Wait for user authentication
+3. Launch BlockAssist with the proper environment configuration
+
+The script automatically handles platform-specific requirements and passes through any command line arguments to BlockAssist.
 
 ## Waiting for Launch
 
@@ -116,7 +118,7 @@ hf_token: "hf_your_token_here"
 Pass the token as a command line argument:
 
 ```bash
-python -m blockassist.launch hf_token="hf_your_token_here"
+./run_launch.sh hf_token="hf_your_token_here"
 ```
 
 #### Method 3: Environment Variable
@@ -125,7 +127,7 @@ Set the HuggingFace Hub token as an environment variable:
 
 ```bash
 export HUGGINGFACE_HUB_TOKEN="hf_your_token_here"
-python -m blockassist.launch
+./run_launch.sh
 ```
 
 **Note:** If no token is provided, the system will attempt to use HuggingFace Hub's default authentication mechanism. You can obtain a HuggingFace token from your [HuggingFace settings page](https://huggingface.co/settings/tokens).
@@ -148,19 +150,25 @@ This project has three primary interaction phases; 1.) startup + goal selection,
 
 Individual commands are explained below, but you can also run `blockassist` in `e2e` mode, which will run through all following steps in sequence:
 
-    python -m blockassist.launch
+```bash
+./run_launch.sh
+```
 
 ### Recording/Building
 
 Starts recording a single episode of the user building a randomly selected goal.
 
-    python -m blockassist.launch "+stages=[episode]"
+```bash
+./run_launch.sh "+stages=[episode]"
+```
 
 ### Training
 
 Trains a model from a previously saved episode and saves it in HuggingFace format. Optionally uploads to HuggingFace if `hf_token` is configured.
 
-    python -m blockassist.launch "+stages=[train]"
+```bash
+./run_launch.sh "+stages=[train]"
+```
 
 ## Telemetry
 

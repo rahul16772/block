@@ -7,12 +7,12 @@ from blockassist.episode import EpisodeRunner
 
 class TestEpisodeRunnerUtils:
     def test_get_last_goal_percentage_min_empty_dict(self):
-        runner = EpisodeRunner("dummy_checkpoint_dir")
+        runner = EpisodeRunner("dummy_address_eoa", "dummy_checkpoint_dir")
         result = {}
         assert runner.get_last_goal_percentage_min(result) == 0.0
 
     def test_get_last_goal_percentage_min_multiple_keys(self):
-        runner = EpisodeRunner("dummy_checkpoint_dir")
+        runner = EpisodeRunner("dummy_address_eoa", "dummy_checkpoint_dir")
         result = {
             "goal_percentage_1_min": 0.25,
             "goal_percentage_5_min": 0.75,
@@ -21,7 +21,7 @@ class TestEpisodeRunnerUtils:
         assert runner.get_last_goal_percentage_min(result) == 0.90
 
     def test_get_last_goal_percentage_min_mixed_keys(self):
-        runner = EpisodeRunner("dummy_checkpoint_dir")
+        runner = EpisodeRunner("dummy_address_eoa", "dummy_checkpoint_dir")
         result = {
             "goal_percentage_3_min": 0.50,
             "other_metric": 1.0,
@@ -31,7 +31,7 @@ class TestEpisodeRunnerUtils:
         assert runner.get_last_goal_percentage_min(result) == 0.85
 
     def test_get_last_goal_percentage_min_zero_minute(self):
-        runner = EpisodeRunner("dummy_checkpoint_dir")
+        runner = EpisodeRunner("dummy_address_eoa", "dummy_checkpoint_dir")
         result = {"goal_percentage_0_min": 0.10, "goal_percentage_5_min": 0.60}
         assert runner.get_last_goal_percentage_min(result) == 0.60
 
@@ -81,7 +81,7 @@ class TestEpisodeRunnerTelemetry:
             }
         )
 
-        runner = EpisodeRunner("dummy_checkpoint_dir")
+        runner = EpisodeRunner("dummy_address_eoa", "dummy_checkpoint_dir")
         runner.start()
 
         # Note: mock_backup is accessed via common_patches in assertions
@@ -103,7 +103,7 @@ class TestEpisodeRunnerTelemetry:
             main_return_value={"other_metric": 1.0, "success": True}
         )
 
-        runner = EpisodeRunner("dummy_checkpoint_dir")
+        runner = EpisodeRunner("dummy_address_eoa", "dummy_checkpoint_dir")
         runner.start()
 
         mock_telemetry_session.assert_called_once_with(
@@ -133,7 +133,7 @@ class TestEpisodeRunnerTelemetry:
             main_side_effect=mock_main_side_effect
         )
 
-        runner = EpisodeRunner("dummy_checkpoint_dir")
+        runner = EpisodeRunner("dummy_address_eoa", "dummy_checkpoint_dir")
         runner.start()
 
         common_patches["mock_main"].assert_called_once()
@@ -154,7 +154,7 @@ class TestEpisodeRunnerTelemetry:
             main_side_effect=[{"goal_percentage_3_min": 0.30}, {"goal_percentage_7_min": 0.70}]
         )
 
-        runner = EpisodeRunner("dummy_checkpoint_dir")
+        runner = EpisodeRunner("dummy_address_eoa", "dummy_checkpoint_dir")
         runner.episode_count = 2  # Set to run 2 episodes
         runner.start()
 
@@ -187,7 +187,7 @@ class TestEpisodeRunnerTelemetry:
             main_side_effect=KeyboardInterrupt("Immediate stop")
         )
 
-        runner = EpisodeRunner("dummy_checkpoint_dir")
+        runner = EpisodeRunner("dummy_address_eoa", "dummy_checkpoint_dir")
         runner.start()
 
         common_patches["mock_main"].assert_called_once()

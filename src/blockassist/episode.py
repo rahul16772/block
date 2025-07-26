@@ -53,9 +53,12 @@ class EpisodeRunner:
 
     def __init__(
         self,
+        address_eoa: str,
         checkpoint_dir: str,
         human_alone: bool = True,
     ):
+        self.address_eoa = address_eoa
+
         self.human_alone = human_alone
         self.checkpoint_dir = checkpoint_dir
 
@@ -91,7 +94,7 @@ class EpisodeRunner:
 
         duration_ms = int((time.time() - self.start_time) * 1000)
         telemetry.push_telemetry_event_session(
-            duration_ms, get_identifier(), self.get_last_goal_percentage_min(result)
+            duration_ms, get_identifier(self.address_eoa), self.get_last_goal_percentage_min(result)
         )
 
     def before_session(self):

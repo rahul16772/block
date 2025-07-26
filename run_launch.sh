@@ -22,8 +22,7 @@ trap cleanup EXIT
 
 echo "=== Modal Login ==="
 
-bash "$ROOT/modal_server.sh"
-sleep 2
+source "$ROOT/modal_server.sh"
 
 echo "=== BlockAssist Launch ==="
 
@@ -31,4 +30,4 @@ echo "=== BlockAssist Launch ==="
 if [[ "$OSTYPE" == "darwin"* ]]; then
     export TMPDIR=/tmp
 fi
-python -m blockassist.launch
+python -m blockassist.launch $@

@@ -40,7 +40,7 @@ class TestTrainingRunnerTelemetry:
         )
         mock_train.return_value = {"final_checkpoint": "/path/to/model"}
 
-        runner = TrainingRunner()
+        runner = TrainingRunner("dummy_address_eoa")
         runner.start()
 
         mock_convert.assert_called_once()
@@ -80,7 +80,7 @@ class TestTrainingRunnerTelemetry:
         )
         mock_train.side_effect = KeyboardInterrupt("Training stopped by user")
 
-        runner = TrainingRunner()
+        runner = TrainingRunner("dummy_address_eoa")
         runner.start()
 
         mock_convert.assert_called_once()
@@ -107,7 +107,7 @@ class TestTrainingRunnerTelemetry:
         )
         mock_train.return_value = {"final_checkpoint": "/different/path/to/model"}
 
-        runner = TrainingRunner()
+        runner = TrainingRunner("dummy_address_eoa")
         runner.start()
 
         mock_telemetry_trained.assert_called_once_with(
@@ -127,7 +127,7 @@ class TestTrainingRunnerTelemetry:
             user_id="direct_user"
         )
 
-        runner = TrainingRunner()
+        runner = TrainingRunner("dummy_address_eoa")
         runner.after_training()
 
         mock_telemetry_trained.assert_called_once_with(
@@ -144,7 +144,7 @@ class TestTrainingRunnerTelemetry:
 
         mock_convert.side_effect = Exception("Conversion failed")
 
-        runner = TrainingRunner()
+        runner = TrainingRunner("dummy_address_eoa")
 
         with pytest.raises(Exception, match="Conversion failed"):
             runner.start()
@@ -167,7 +167,7 @@ class TestTrainingRunnerTelemetry:
         )
         mock_train.side_effect = RuntimeError("Training failed")
 
-        runner = TrainingRunner()
+        runner = TrainingRunner("dummy_address_eoa")
 
         with pytest.raises(RuntimeError, match="Training failed"):
             runner.start()

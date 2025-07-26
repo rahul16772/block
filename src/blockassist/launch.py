@@ -112,6 +112,7 @@ async def _main(cfg: DictConfig):
             elif stage == Stage.EPISODE:
                 _LOG.info("Starting episode recording!!")
                 episode_runner = EpisodeRunner(
+                    address_eoa,
                     checkpoint_dir,
                     human_alone=num_instances == 1,
                 )
@@ -121,6 +122,7 @@ async def _main(cfg: DictConfig):
             elif stage == Stage.UPLOAD_EPISODES:
                 _LOG.info("Uploading episode zips!")
                 s3_uris = zip_and_upload_episodes(
+                    address_eoa,
                     checkpoint_dir,
                     _DEFAULT_EPISODES_S3_BUCKET,
                 )
@@ -130,7 +132,7 @@ async def _main(cfg: DictConfig):
 
             elif stage == Stage.TRAIN:
                 _LOG.info("Starting model training!!")
-                training_runner = TrainingRunner(num_training_iters=1)
+                training_runner = TrainingRunner(address_eoa, num_training_iters=1)
                 training_runner.start()
                 model_dir = training_runner.model_dir
                 await training_runner.wait_for_end()
@@ -144,7 +146,7 @@ async def _main(cfg: DictConfig):
                     is_telemetry_enabled = not telemetry.is_telemetry_disabled()
                     upload_to_huggingface(
                         model_path=Path(model_dir),
-                        user_id=get_identifier(),
+                        user_id=get_identifier(address_eoa),
                         repo_id=hf_repo_id,
                         hf_token=hf_token,
                         chain_metadata_dict={

@@ -2,7 +2,7 @@ from pathlib import Path
 import shutil
 import zipfile
 
-from blockassist.globals import get_identifier, get_logger
+from blockassist.globals import get_logger
 from blockassist.distributed.s3 import upload_zip_to_s3
 
 
@@ -75,11 +75,14 @@ def restore_evaluate_dirs_from_backup(checkpoint_dir: str) -> None:
             shutil.copytree(d, dest)
 
 
-def zip_and_upload_episodes(checkpoint_dir: str, bucket_name: str) -> list[str]:
+def zip_and_upload_episodes(
+    identifier: str, checkpoint_dir: str, bucket_name: str
+) -> list[str]:
     """
     Zip all episode directories and upload them to S3.
 
     Args:
+        identifier: Unique identifier for this user
         checkpoint_dir: Checkpoint directory containing evaluate_ directories
         bucket_name: S3 bucket name for upload
 
@@ -120,7 +123,7 @@ def zip_and_upload_episodes(checkpoint_dir: str, bucket_name: str) -> list[str]:
 
         # Upload to S3
         s3_uri = upload_zip_to_s3(
-            str(zip_path), bucket_name, f"{get_identifier()}/{zip_filename}"
+            str(zip_path), bucket_name, f"{identifier}/{zip_filename}"
         )
         s3_uris.append(s3_uri)
 
