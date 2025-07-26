@@ -26,5 +26,4 @@ def upload_zip_to_s3(
         return s3_uri
     except Exception as e:
         _LOG.error(f"Failed to upload {zip_path} to S3: {e}")
-        raise
 
