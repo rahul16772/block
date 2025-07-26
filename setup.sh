@@ -26,6 +26,7 @@ elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     curl https://cdn.azul.com/zulu/bin/zulu8.25.0.1-ca-jdk8.0.152-linux_x64.tar.gz -o zulu8.25.0.1-ca-jdk8.0.152-linux_x64.tar.gz
     sudo tar -xf zulu8.25.0.1-ca-jdk8.0.152-linux_x64.tar.gz -C /opt
     echo "JAVA_PATH=/opt/jdk1.8.0_152" >>$HOME/.bashrc
+    export JAVA_PATH=/opt/jdk1.8.0_152
     echo "PATH=$PATH:$JAVA_PATH/bin" >>$HOME/.bashrc
 
 fi
