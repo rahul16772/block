@@ -150,10 +150,10 @@ async def _main(cfg: DictConfig):
                         repo_id=hf_repo_id,
                         hf_token=hf_token,
                         chain_metadata_dict={
-                            "EOA": address_eoa,
-                            "TrainingId": training_id,
-                            "NumSessions": num_sessions,
-                            "Telemetry": is_telemetry_enabled,
+                            "eoa": address_eoa,
+                            "trainingId": training_id,
+                            "numSessions": num_sessions,
+                            "telemetryEnabled": is_telemetry_enabled,
                         },
                     )
                     coordinator.submit_hf_upload(
