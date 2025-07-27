@@ -15,6 +15,10 @@ def get_logger() -> logging.Logger:
     global _LOG
     if _LOG is None:
         _LOG = logging.getLogger(__name__)
+    lib_logger = logging.getLogger("mbag")
+    lib_logger.setLevel(logging.ERROR)
+    lib_logger.propagate = False
+    lib_logger.addHandler(logging.NullHandler())
     return _LOG
 
 def get_hostname() -> str:
