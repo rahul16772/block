@@ -91,15 +91,11 @@ setup_node_nvm
 ### Setup environment configuration
 setup_environment
 
-if test -d modal-login/.next/; then
+echo "Installing dependencies..."
+yarn install --immutable
 
-    echo "Installing dependencies..."
-    yarn install --immutable
-
-    echo "Building server..."
-    yarn build
-
-fi
+echo "Building server..."
+yarn build
 
 echo "Running server..."
 yarn start >> "$ROOT/logs/yarn.log" 2>&1 & # Run in background and log output
