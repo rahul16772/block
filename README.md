@@ -19,53 +19,38 @@ brew update
 brew install pyenv
 ```
 
-**Set up logging directory**
-```
-mkdir -p logs
-touch logs/malmo.log logs/yarn.log logs/blockassist.log
-```
-
-
-## Run execution scripts
-Run each script in a separate terminal. If you ever want to know what a given script is doing: `tail -f logs/[execution_script].logs`. Leave all of these terminals running until told otherwise.
-
-**Run Malmo (Minecraft)**
-```
-./scripts/run_malmo.sh
-```
-
-**Run Modal Login**
-```
-./scripts/yarn_run.sh
-```
-and login on your web browser at the address `localhost:3000`
-
-**Set some env variables**
-
-Note that this step is totally unoptimised.
-
+**Ensure you have a Hugging Face token set**
 ```
 export HF_TOKEN=[your_token]
-export BA_ADDRESS_EOA=$(jq -r 'to_entries[0].value.address' modal-login/temp-data/userData.json)
-export BA_ORG_ID=$(jq -r 'to_entries[0].value.orgId' modal-login/temp-data/userData.json)
 ```
 
+## Run BlockAssist 
 
-**Run BlockAssist**
+Use `tail -f logs/[specific log].log` to monitor progress. `ls logs` to see options. Note, when asked to press enter, sometimes you need to do this a few times.
 
-Note, before doing this open *another* terminal and `tail -f logs/blockassist.log`. This will allow you to monitor progress.
-
+**Run Python file**
 ```
-./scripts/run_blockassist.sh
+python run.py
 ```
+The program will install various dependencies, as required. Follow any instructions and approve all asks.
+
+**Modal login**
+
+You will be prompted to log in via the modal. If you have previously logged in, it will skip this step. Else, log in and press enter when done.
 
 **Play a few seconds of Minecraft**
 
-Go to the minecraft window which is still showing (one will be minimised). Click the window. Press enter. Move around a bit. Press escape. Go back to the terminal window where you ran the above BlockAssist command and press `ctrl + c` once.
+Once the minecraft windows have loaded it will ask you to click enter. 
+
+Go to the minecraft window which is showing (one will be minimised). Click the window. Press enter. Move around a bit. Press escape. Go back to the terminal window. Press enter again, as prompted.
+
+**Training**
+
+A model will now train and be submitted to Hugging Face and the smart contract.
 
 **Review logs**
 
-If you reach this stage in the logging window, and can see a transactions in the block explorer then the test has worked.
+If you reach this stage in the logging window, and can see a transactions in the block explorer then submissions have worked.
 
 Logging window:
 ```
@@ -79,7 +64,7 @@ false
 h-grieve/blockassist-bc-bellowing_pouncing_horse_1753675374
 ```
 
-You should now `ctrl+c` and kill all the terminal windows
+The program will end, please close any minecraft windows if they remain open.
 
 
 ## Configuration
