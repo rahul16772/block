@@ -1,136 +1,104 @@
 # BlockAssist
 
-Distributed extensions of the paper [AssistanceZero: Scalably Solving Assistance Games](https://arxiv.org/abs/2504.07091). Adds
-multiplayer interactions, distributed training modalities, model merging/uploading, and on-chain attribution.
+**NOTE: this README.md is geared towards testing. It will be buffed prior to release.**
 
-## Installation
+BlockAssist is a distributed extension of the paper [AssistanceZero: Scalably Solving Assistance Games](https://arxiv.org/abs/2504.07091).
 
-### Python
+## Installation (Mac)
 
-First, you need to be running Python 3.10. It is recommended to install it with Pyenv.
+*You only need to ever run these once, you can skip when running future tests*
+**Clone and enter repo**
+```
+git clone git@github.com:gensyn-ai/blockassist-private.git
+cd blockassist-private
+```
 
-#### MacOS
-
-```bash
+**Ensure pyenv installed**
+```
 brew update
 brew install pyenv
 ```
 
-Now Pyenv is installed. Run the following command, and **follow the instructions** it displays
-
-```bash
-pyenv init # Follow the instructions from this command
+**Set up logging directory**
+```
+mkdir -p logs
+touch logs/malmo.log logs/yarn.log logs/blockassist.log
 ```
 
-For example, it may ask you to update your .zshrc.
-
-Once that is done, you can install Python 3.10.
-
+**Set up venv**
 ```
-pyenv install 3.10
-pyenv shell 3.10
+./scripts/venv_setup.sh | tee logs/venv.log
 ```
 
-#### Linux
-
-```bash
-curl -fsSL https://pyenv.run | bash
+**Set up gradle**
+```
+./scripts/gradle_setup.sh
 ```
 
-Now Pyenv is installed. Run the following command, and **follow the instructions** it displays
-
-```bash
-pyenv init # Follow the instructions from this command
+**Set up yarn**
+```
+./scripts/yarn_setup.sh
 ```
 
-For example, it may ask you to update your .zshrc.
+## Run execution scripts
+Run each script in a separate terminal. If you ever want to know what a given script is doing: `tail -f logs/[execution_script].logs`. Leave all of these terminals running until told otherwise.
 
-Once that is done, you can install Python 3.10.
-
+**Run Malmo (Minecraft)**
 ```
-pyenv install 3.10
-pyenv shell 3.10
-```
-
-### Java JDK 8u152
-
-Run the setup.sh script in the repo to install Java 8u152.
-
-```bash
-curl "https://raw.githubusercontent.com/gensyn-ai/blockassist-private/refs/heads/main/setup.sh" | bash
+./scripts/run_malmo.sh
 ```
 
-### BlockAssist
+**Run Modal Login**
+```
+./scripts/yarn_run.sh
+```
+and login on your web browser at the address `localhost:3000`
 
-Next, create a Python virtual environment install BlockAssist from Pip:
+**Set some env variables**
 
-```bash
-python -m venv blockassist-venv
-. blockassist-venv/bin/activate
-pip install blockassist
+Note that this step is totally unoptimised.
+
+```
+export HF_TOKEN=[your_token]
+export BA_ADDRESS_EOA=$(jq -r 'to_entries[0].value.address' modal-login/temp-data/userData.json)
+export BA_ORG_ID=$(jq -r 'to_entries[0].value.orgId' modal-login/temp-data/userData.json)
 ```
 
-## Running
 
-After installing the dependencies, you're ready to launch!
+**Run BlockAssist**
 
-Simply run the launch script, which will handle both modal server setup and BlockAssist launch:
+Note, before doing this open *another* terminal and `tail -f logs/blockassist.log`. This will allow you to monitor progress.
 
-```bash
-./run_launch.sh
+```
+./scripts/run_blockassist.sh
 ```
 
-This script will:
+**Play a few seconds of Minecraft**
 
-1. Set up and run the modal login server
-2. Wait for user authentication
-3. Launch BlockAssist with the proper environment configuration
+Go to the minecraft window which is still showing (one will be minimised). Click the window. Press enter. Move around a bit. Press escape. Go back to the terminal window where you ran the above BlockAssist command and press `ctrl + c` once.
 
-The script automatically handles platform-specific requirements and passes through any command line arguments to BlockAssist.
+**Review logs**
 
-## Waiting for Launch
+If you reach this stage in the logging window, and can see a transactions in the block explorer then the test has worked.
 
-NOTE: The first time you run BlockAssist, it may take upwards of five minutes to launch. If you see an error from `asyncio` saying that it has timed out, just run the same command again.
+Logging window:
+```
+[2025-07-28 05:03:48,955][blockassist.globals][INFO] - Successfully uploaded model to HuggingFace: h-grieve/blockassist-bc-bellowing_pouncing_horse_1753675374 with size 20.00 MB
+```
+[Block explorer](https://gensyn-testnet.explorer.alchemy.com/address/0xa6834217923D7A2A0539575CFc67abA209E6436F?tab=logs):
+```
+huggingFaceID
+string
+false
+h-grieve/blockassist-bc-bellowing_pouncing_horse_1753675374
+```
 
-Minecraft will launch two windows. One window is the "assistant," and one window is your game. For more information on how to interact with the game, [click here]().
+You should now `ctrl+c` and kill all the terminal windows
 
-# FIX THIS LINK
 
 ## Configuration
 
 BlockAssist uses Hydra for configuration management. You can modify settings in the `config.yaml` file or override them via command line arguments.
-
-### HuggingFace Token Configuration
-
-To upload trained models to HuggingFace, you need to configure your HuggingFace token. There are several ways to do this:
-
-#### Method 1: Configuration File
-
-Edit `src/blockassist/config.yaml` and set your token:
-
-```yaml
-mode: e2e
-hf_token: "hf_your_token_here"
-```
-
-#### Method 2: Command Line Override
-
-Pass the token as a command line argument:
-
-```bash
-./run_launch.sh hf_token="hf_your_token_here"
-```
-
-#### Method 3: Environment Variable
-
-Set the HuggingFace Hub token as an environment variable:
-
-```bash
-export HUGGINGFACE_HUB_TOKEN="hf_your_token_here"
-./run_launch.sh
-```
-
-**Note:** If no token is provided, the system will attempt to use HuggingFace Hub's default authentication mechanism. You can obtain a HuggingFace token from your [HuggingFace settings page](https://huggingface.co/settings/tokens).
 
 ## Testing & Contributing
 
@@ -144,31 +112,6 @@ Pytest is used to run unit/integration tests. See below.
 
     pytest .
 
-## Flow
-
-This project has three primary interaction phases; 1.) startup + goal selection, 2.) recording a building episode, and 3.) training the actual model. The first and third are mediated by the launcher script but the 2nd is entirely in the Minecraft client.
-
-Individual commands are explained below, but you can also run `blockassist` in `e2e` mode, which will run through all following steps in sequence:
-
-```bash
-./run_launch.sh
-```
-
-### Recording/Building
-
-Starts recording a single episode of the user building a randomly selected goal.
-
-```bash
-./run_launch.sh "+stages=[episode]"
-```
-
-### Training
-
-Trains a model from a previously saved episode and saves it in HuggingFace format. Optionally uploads to HuggingFace if `hf_token` is configured.
-
-```bash
-./run_launch.sh "+stages=[train]"
-```
 
 ## Telemetry
 
@@ -177,5 +120,3 @@ This repository uploads telemetry to Gensyn services. To disable telemetry, expo
 ```bash
 export DISABLE_TELEMETRY=1
 ```
-
-Then, you can run the repository as normal.

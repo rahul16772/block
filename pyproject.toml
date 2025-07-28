@@ -9,7 +9,7 @@ package-dir = { "" = "src" }
 name = "blockassist"
 description = "Distributed experiments built using the MBAG multiagent environment (https://github.com/cassidylaidlaw/minecraft-building-assistance-game)."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<4.0"
 version = "0.0.1"
 dependencies = [
   "aiofiles",
@@ -23,6 +23,7 @@ dependencies = [
   "six",
   "pydantic",
   "web3",
+  "python-dotenv (>=1.1.1,<2.0.0)",
 ]
 
 [project.optional-dependencies]

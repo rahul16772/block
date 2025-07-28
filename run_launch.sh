@@ -30,6 +30,7 @@ DOCKER=${DOCKER:-""}
 
 # This is an address good enough for testing.
 export SMART_CONTRACT_ADDRESS="0xa6834217923D7A2A0539575CFc67abA209E6436F"
+echo "SMART_CONTRACT_ADDRESS=$SMART_CONTRACT_ADDRESS" >> .env # This will not check if the value already exists, and so may fill up the file multiple times
 
 # Function to setup Node.js and NVM
 setup_node_nvm() {
@@ -92,10 +93,10 @@ setup_node_nvm
 setup_environment
 
 echo "Installing dependencies..."
-yarn install --immutable
+#yarn install --immutable
 
 echo "Building server..."
-yarn build
+#yarn build
 
 echo "Running server..."
 yarn start >> "$ROOT/logs/yarn.log" 2>&1 & # Run in background and log output
@@ -126,6 +127,9 @@ echo "Found userData.json. Proceeding..."
 export BA_ORG_ID=$(awk 'BEGIN { FS = "\"" } !/^[ \t]*[{}]/ { print $(NF - 1); exit }' modal-login/temp-data/userData.json)
 export BA_ADDRESS_EOA=$(awk -F'"' '/"address"/ { print $4; exit }' modal-login/temp-data/userData.json)
 export PYTHONWARNINGS="ignore::DeprecationWarning"
+echo "BA_ORG_ID=$BA_ORG_ID" >> .env
+echo "BA_ADDRESS_EOA=$BA_ADDRESS_EOA" >> .env
+echo "PYTHONWARNINGS=$PYTHONWARNINGS" >> .env
 
 echo "=== BlockAssist Launch ==="
 

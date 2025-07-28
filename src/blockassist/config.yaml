@@ -1,4 +1,4 @@
 mode: e2e
-hf_token: null  # Set this to your HuggingFace token for uploads
+hf_token: ${oc.env:HF_TOKEN} # Set this to your HuggingFace token for uploads
 org_id: ${oc.env:BA_ORG_ID}
 address_eoa: ${oc.env:BA_ADDRESS_EOA}

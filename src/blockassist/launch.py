@@ -1,4 +1,10 @@
+import dotenv
+
+dotenv.load_dotenv()
+
+
 import asyncio
+import logging
 import os
 import sys
 from enum import Enum
@@ -77,6 +83,7 @@ def get_hf_repo_id(hf_token: str, training_id: str):
 
 async def _main(cfg: DictConfig):
     try:
+        logging.basicConfig(filename='logs/blockassist.log', encoding='utf-8', level=logging.DEBUG)
         if cfg["mode"] == "e2e":
             _LOG.info("Starting full recording session!!")
 
@@ -136,7 +143,7 @@ async def _main(cfg: DictConfig):
 
             elif stage == Stage.TRAIN:
                 _LOG.info("Starting model training!!")
-                training_runner = TrainingRunner(address_eoa, num_training_iters=1)
+                training_runner = TrainingRunner(address_eoa, num_training_iters=0)
                 training_runner.start()
                 model_dir = training_runner.model_dir
                 await training_runner.wait_for_end()

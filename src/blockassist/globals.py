@@ -13,7 +13,8 @@ _LOG = None
 
 def get_logger() -> logging.Logger:
     global _LOG
-    if _LOG is None:
+    if not _LOG:
+        logging.basicConfig(filename="logs/blockassist.log")
         _LOG = logging.getLogger(__name__)
     lib_logger = logging.getLogger("mbag")
     lib_logger.setLevel(logging.ERROR)
