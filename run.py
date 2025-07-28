@@ -134,7 +134,7 @@ def run():
     print("Stopping episode recording")
     send_blockassist_sigint(proc_blockassist.pid)
 
-    print("Killing Malmo")
+    print("Stopping Malmo")
     print("You can close the two Minecraft windows, now")
     proc_malmo.kill()
     proc_malmo.wait()
@@ -148,7 +148,7 @@ def run():
 
     print("Training complete")
 
-    print("Killing Yarn")
+    print("Stopping Yarn")
     proc_yarn.kill()
 
 
