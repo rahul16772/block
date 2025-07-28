@@ -25,20 +25,6 @@ mkdir -p logs
 touch logs/malmo.log logs/yarn.log logs/blockassist.log
 ```
 
-**Set up venv**
-```
-./scripts/venv_setup.sh | tee logs/venv.log
-```
-
-**Set up gradle**
-```
-./scripts/gradle_setup.sh
-```
-
-**Set up yarn**
-```
-./scripts/yarn_setup.sh
-```
 
 ## Run execution scripts
 Run each script in a separate terminal. If you ever want to know what a given script is doing: `tail -f logs/[execution_script].logs`. Leave all of these terminals running until told otherwise.

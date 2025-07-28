@@ -93,6 +93,12 @@ def wait_for_login():
 def run():
     print("Welcome to Blockassist")
 
+    if os.environ.get("HF_TOKEN") is None:
+        print("Please set the HF_TOKEN environment variable to your Hugging Face token in your ~/.bashrc or ~/.zshrc (Mac) file")
+        print("Example:")
+        print("export HF_TOKEN='your_token_here'")
+        sys.exit(1)
+
     print("Setting up virtualenv")
     setup_venv()
 
