@@ -98,11 +98,14 @@ def run():
     input()
     print("Enter received")
 
+    print("Stopping episode recording")
+    proc_blockassist.send_signal(sig=signal.SIGINT)
+
     print("Killing Malmo")
     print("You can close the two Minecraft windows, now")
     proc_malmo.kill()
     proc_malmo.wait()
-    
+
     print("Waiting for BlockAssist to stop")
     proc_blockassist.wait()
 
