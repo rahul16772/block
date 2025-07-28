@@ -55,6 +55,11 @@ def run_blockassist():
     PROCESSES.append(process)
     return process
 
+def send_blockassist_sigint(pid: int):
+    cmd = f"kill -s INT -- $(pgrep -P {pid})"
+    process = Popen(cmd, shell=True)
+    process.wait()
+
 def train_blockassist():
     cmd = "./scripts/train_blockassist.sh"
     process = Popen(cmd, shell=True)
@@ -99,7 +104,7 @@ def run():
     print("Enter received")
 
     print("Stopping episode recording")
-    proc_blockassist.send_signal(sig=signal.SIGINT)
+    send_blockassist_sigint(proc_blockassist.pid)
 
     print("Killing Malmo")
     print("You can close the two Minecraft windows, now")

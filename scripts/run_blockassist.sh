@@ -5,16 +5,6 @@ set -o pipefail
 
 source .env
 
-# Function to clean up the server process upon exit
-cleanup() {
-    # Kill all processes belonging to this script's process group
-    echo "Killing BlockAssist"
-    kill -s SIGINT -- -$$ || true
-    echo "BlockAssist SIGINT sent"
-
-    exit 0
-}
-trap cleanup SIGINT
 
 # Set TMPDIR=/tmp on macOS to avoid path length errors
 if [[ "$OSTYPE" == "darwin"* ]]; then
