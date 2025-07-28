@@ -55,6 +55,12 @@ def run_blockassist():
     PROCESSES.append(process)
     return process
 
+def train_blockassist():
+    cmd = "./scripts/train_blockassist.sh"
+    process = Popen(cmd, shell=True)
+    PROCESSES.append(process)
+    return process
+
 def run():
     print("Welcome to Blockassist")
 
@@ -66,7 +72,7 @@ def run():
 
     print("Compiling Yarn")
 
-    #setup_yarn()
+    setup_yarn()
 
     print("Done setting up Yarn")
 
@@ -95,11 +101,15 @@ def run():
     print("Killing Malmo")
     print("You can close the two Minecraft windows, now")
     proc_malmo.kill()
-    print("Sending SIGINT")
-    proc_blockassist.send_signal(sig=signal.SIGINT)
-
-    print("Waiting for training")
+    proc_malmo.wait()
+    
+    print("Waiting for BlockAssist to stop")
     proc_blockassist.wait()
+
+    print("Running training")
+    proc_train = train_blockassist()
+    proc_train.wait()
+
 
 if __name__ == "__main__":
     try:

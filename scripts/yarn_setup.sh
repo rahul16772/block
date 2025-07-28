@@ -9,14 +9,17 @@ source ./scripts/node_env.sh
 
 cd modal-login
 
-### Install Node, NVM, Yarn if needed.
-setup_node_nvm
+if [ ! -d .next ]; then
+    ### Install Node, NVM, Yarn if needed.
+    setup_node_nvm
 
-### Setup environment configuration
-setup_environment
+    ### Setup environment configuration
+    setup_environment
 
-echo "Installing dependencies..."
-yarn install --immutable
+    echo "Installing dependencies..."
+    yarn install --immutable
 
-echo "Building server..."
-yarn build
+    echo "Building server..."
+    yarn build
+
+fi
