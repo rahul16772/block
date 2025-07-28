@@ -10,6 +10,27 @@ import json
 
 _LOG = get_logger()
 
+def _create_readme(model_path: Path) -> None:
+    readme_path = model_path / "README.md"
+    front_matter = """\
+---
+tags:
+  - gensyn
+  - blockassist
+  - gensyn-blockassist
+  - minecraft
+---
+
+"""
+    body = """\
+# Gensyn BlockAssist
+
+Gensyn's BlockAssist is a distributed extension of the paper [AssistanceZero: Scalably Solving Assistance Games](https://arxiv.org/abs/2504.07091).
+"""
+    readme_path.write_text(front_matter + body, encoding="utf-8")
+    _LOG.info(f"Created README.md with YAML metadata at {readme_path!r}")
+
+
 
 def upload_to_huggingface(
     model_path: Path, user_id: str, repo_id: str, hf_token: str | None = None, chain_metadata_dict: dict | None = None,
@@ -18,6 +39,7 @@ def upload_to_huggingface(
         raise FileNotFoundError(f"Model directory does not exist: {model_path}")
 
     try:
+        _create_readme(model_path)
         api = HfApi(token=hf_token)
         api.create_repo(repo_id=repo_id, repo_type="model", exist_ok=True, private=True)
         api.upload_folder(repo_id=repo_id, repo_type="model", folder_path=model_path)
