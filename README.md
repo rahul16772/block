@@ -99,6 +99,8 @@ You should now `ctrl+c` and kill all the terminal windows
 ## Configuration
 
 BlockAssist uses Hydra for configuration management. You can modify settings in the `config.yaml` file or override them via command line arguments.
+`episode_count` - Controls number of episodes. If `episode_count`>1, a new episode will be started every time you `ctrl+c`
+`num_training_iters` - Controls number of training iterations on all your recorded episodes
 
 ## Testing & Contributing
 

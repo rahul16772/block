@@ -104,6 +104,8 @@ async def _main(cfg: DictConfig):
         num_instances = cfg.get("num_instances", 2)
         checkpoint_dir = cfg.get("checkpoint_dir", _DEFAULT_CHECKPOINT)
         model_dir = cfg.get("model_dir", "")
+        episode_count = cfg.get("episode_count", 1)
+        num_training_iters = cfg.get("num_training_iters", 0)
 
         stages = get_stages(cfg)
         for stage in stages:
@@ -125,6 +127,7 @@ async def _main(cfg: DictConfig):
                 episode_runner = EpisodeRunner(
                     address_eoa,
                     checkpoint_dir,
+                    episode_count,
                     human_alone=num_instances == 1,
                 )
                 episode_runner.start()
@@ -143,7 +146,7 @@ async def _main(cfg: DictConfig):
 
             elif stage == Stage.TRAIN:
                 _LOG.info("Starting model training!!")
-                training_runner = TrainingRunner(address_eoa, num_training_iters=0)
+                training_runner = TrainingRunner(address_eoa, num_training_iters)
                 training_runner.start()
                 model_dir = training_runner.model_dir
                 await training_runner.wait_for_end()

@@ -55,6 +55,7 @@ class EpisodeRunner:
         self,
         address_eoa: str,
         checkpoint_dir: str,
+        episode_count: int = 1,
         human_alone: bool = True,
     ):
         self.address_eoa = address_eoa
@@ -63,7 +64,7 @@ class EpisodeRunner:
         self.checkpoint_dir = checkpoint_dir
 
         self.completed_episode_count = 0
-        self.episode_count = 1
+        self.episode_count = episode_count
 
         self.start_time = time.time()
         self.end_time = None
