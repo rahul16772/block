@@ -146,6 +146,11 @@ def run():
     proc_train = train_blockassist(env=env)
     proc_train.wait()
 
+    print("Training complete")
+
+    print("Killing Yarn")
+    proc_yarn.kill()
+
 
 if __name__ == "__main__":
     try:
