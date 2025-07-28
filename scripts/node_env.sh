@@ -3,7 +3,10 @@
 set -e -u
 set -o pipefail
 
-source .env
+# Test if file exists, if so, source .env
+if [[ -f "$PWD"/.env ]]; then
+    source "$PWD"/.env
+fi
 
 # Function to setup Node.js and NVM
 setup_node_nvm() {

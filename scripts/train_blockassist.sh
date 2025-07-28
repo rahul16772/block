@@ -3,7 +3,10 @@
 set -e -u
 set -o pipefail
 
-source .env
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    export TMPDIR="/tmp"
+fi
 
 . blockassist-venv/bin/activate
 

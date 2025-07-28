@@ -3,13 +3,10 @@
 set -e -u
 set -o pipefail
 
-source .env
-
-
 # Set TMPDIR=/tmp on macOS to avoid path length errors
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    export TMPDIR=/tmp
-    PID=$(lsof -nP -iTCP:10001 | awk '$2 ~ /^[0-9]+$/ { print $2; exit }')
+    export TMPDIR="/tmp"
+    PID="$(lsof -nP -iTCP:10001 | awk '$2 ~ /^[0-9]+$/ { print $2; exit }')"
     # Now tell System Events to minimize every window of that process by ID. If it fails, reset Terminal preferences for the next time this script is run and continue
     {
     osascript <<EOF

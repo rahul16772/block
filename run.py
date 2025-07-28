@@ -78,46 +78,17 @@ def wait_for_login():
     # Read and parse the JSON file
     with open(user_data_path, 'r') as f:
         user_data = json.load(f)
-
-    # Extract BA_ORG_ID (last non-empty string value in the JSON)
-    def get_last_string_value(obj):
-        """Recursively find the last string value in a JSON object"""
-        if isinstance(obj, dict):
-            for value in reversed(list(obj.values())):
-                result = get_last_string_value(value)
-                if result:
-                    return result
-        elif isinstance(obj, list):
-            for item in reversed(obj):
-                result = get_last_string_value(item)
-                if result:
-                    return result
-        elif isinstance(obj, str) and obj.strip():
-            return obj
-        return None
-
-    # Extract BA_ADDRESS_EOA (first "address" field value)
-    def get_address_value(obj):
-        """Recursively find the first 'address' field value"""
-        if isinstance(obj, dict):
-            if 'address' in obj:
-                return obj['address']
-            for value in obj.values():
-                result = get_address_value(value)
-                if result:
-                    return result
-        elif isinstance(obj, list):
-            for item in obj:
-                result = get_address_value(item)
-                if result:
-                    return result
-        return None
     
-    return {
-        "BA_ORG_ID": get_last_string_value(user_data) or '',
-        "BA_ADDRESS_EOA": get_address_value(user_data) or '',
-        "PYTHONWARNINGS": 'ignore::DeprecationWarning'
-    }
+    for k in user_data.keys():
+        d = os.environ.copy()
+        
+        d["BA_ORG_ID"] = user_data[k].get("orgId", '')
+        d["BA_ADDRESS_EOA"] = user_data[k].get("address", '')
+        d["PYTHONWARNINGS"] = 'ignore::DeprecationWarning'
+        
+        return d
+    
+    raise ValueError("No user data found in userData.json")
 
 def run():
     print("Welcome to Blockassist")
@@ -136,15 +107,13 @@ def run():
 
     proc_malmo = run_malmo()
 
-    print("Running Gensyn login modal")
     proc_yarn = run_yarn()
+    time.sleep(5)
+    if not os.path.exists("modal-login/temp-data/userData.json"):
+        print("Running Gensyn login modal")
+        run_open()
+
     env = wait_for_login()
-
-    proc_open = run_open()
-
-    print("Please press ENTER when you have logged in with your Gensyn account")
-    input()
-    print("Enter received")
 
     print("Please press ENTER when two Minecraft windows have opened. This may take up to 5 minutes to happen")
     input()
