@@ -171,6 +171,7 @@ By Gensyn
     print("\nSTART MINECRAFT")
     print("========")
     print("Please press ENTER when two Minecraft windows have opened. This may take up to 5 minutes to happen.")
+    print("NOTE: If one or both of the windows closes, please restart the program.")
     print("If you don't see 'Enter received', press ENTER again.")
     print("\nLoading...")
 
@@ -219,7 +220,51 @@ By Gensyn
     proc_train.wait()
 
     print("Training complete")
-    print("Data submitted to Hugging Face and the smart contract")
+
+    print("\nUPLOAD TO HUGGINGFACE AND SMART CONTRACT")
+    print("========")    
+    # Monitor blockassist-train.log for HuggingFace upload confirmation and transaction hash
+    print("Checking for upload confirmation and transaction hash...")
+    train_log_path = "logs/blockassist-train.log"
+    upload_confirmed = False
+    transaction_hash = None
+    
+    # Wait up to 30 seconds for the logs to appear
+    for attempt in range(30):
+        time.sleep(1)
+        
+        try:
+            # Check blockassist-train.log for both logs
+            if os.path.exists(train_log_path):
+                with open(train_log_path, 'r') as f:
+                    lines = f.readlines()
+                    last_15_lines = lines[-15:] if len(lines) >= 15 else lines
+                
+                for line in last_15_lines:
+                    line = line.strip()
+                    if "Successfully uploaded model to HuggingFace:" in line and not upload_confirmed:
+                        print("✅ " + line)
+                        upload_confirmed = True
+                    elif "HF Upload API response:" in line and not transaction_hash:
+                        print("🔗 " + line)
+                        transaction_hash = line
+            
+            # If we found both, we can stop monitoring
+            if upload_confirmed and transaction_hash:
+                print("Copy your HuggingFace model path (e.g. 'block-fielding/bellowing_pouncing_horse_1753796381') and check for it here:\nhttps://gensyn-testnet.explorer.alchemy.com/address/0xa6834217923D7A2A0539575CFc67abA209E6436F?tab=logs")
+                break
+                
+        except Exception as e:
+            print(f"Error reading log file: {e}")
+            break
+    
+    # If we didn't find the logs after 30 seconds
+    if not upload_confirmed and not transaction_hash:
+        print("⚠️ No upload confirmation or transaction hash found in blockassist-train.log")
+    elif not upload_confirmed:
+        print("⚠️ No HuggingFace upload confirmation found in blockassist-train.log")
+    elif not transaction_hash:
+        print("⚠️ No transaction hash found in blockassist-train.log")
 
     print("\nSHUTTING DOWN")
     print("========")

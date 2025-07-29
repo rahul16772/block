@@ -31,4 +31,5 @@ def send_via_api(org_id, method, args):
     # Send the POST request.
     response = requests.post(url, json=payload)
     response.raise_for_status()  # Raise an exception for HTTP errors
+    logger.info('HF Upload API response: %s', response.json())
     return response.json()
