@@ -8,14 +8,13 @@ import threading
 import readchar
 
 from subprocess import Popen
-from typing import List, Optional, Dict
+from typing import Optional, Dict
 
 import psutil
 
-PROCESSES: List[Popen] = []
+from daemon import PROCESSES, cleanup_processes, start_log_watcher
 
-
-def create_logs_dir():
+def create_logs_dir(clear_existing=True):
     logging.info("Running create_logs_dir")
     if not os.path.exists("logs"):
         print("Creating logs directory")
@@ -26,6 +25,14 @@ def create_logs_dir():
             sys.exit(ret)
     else:
         print("Logs directory already exists")
+        if clear_existing:
+            print("Clearing existing logs directory")
+            cmd = "rm -f logs/*"
+            process = Popen(cmd, shell=True)
+            ret = process.wait()
+            if ret != 0:
+                sys.exit(ret)
+
 
 def create_evaluate_dir():
     logging.info("Running create_evaluate_dir")
@@ -38,21 +45,6 @@ def create_evaluate_dir():
             sys.exit(ret)
     else:
         print("Evaluate directory already exists")
-
-def kill_gradle_processes():
-    logging.info("Running kill_gradle_processes")
-    cmd = "pkill -f gradle"
-    process = Popen(cmd, shell=True)
-    process.wait()
-
-def cleanup_processes():
-    logging.info("Running cleanup_processes")
-    print("Cleaning up processes...")
-    kill_gradle_processes()
-    for proc in PROCESSES:
-        if proc.poll() is None:  # Process is still running
-            proc.kill()
-            proc.wait()
 
 def setup_venv():
     logging.info("Running setup_venv")
@@ -227,7 +219,7 @@ By Gensyn
             print("✅ HF_TOKEN set successfully")
 
     print("Creating directories...")
-    create_logs_dir()
+    create_logs_dir(clear_existing=True)
     create_evaluate_dir()
 
     logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s',
@@ -246,6 +238,7 @@ By Gensyn
     setup_yarn()
 
     print("Setting up Minecraft...")
+    start_log_watcher()
     proc_malmo = run_malmo()
 
 
@@ -385,11 +378,7 @@ By Gensyn
 if __name__ == "__main__":
     try:
         run()
-        kill_gradle_processes()
-        for proc in PROCESSES:
-            proc.wait()
     except KeyboardInterrupt:
-        kill_gradle_processes()
-        for proc in PROCESSES:
-            proc.kill()
-            proc.wait()
+        pass
+    finally:
+        cleanup_processes()

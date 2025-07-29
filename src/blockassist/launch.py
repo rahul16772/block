@@ -57,7 +57,6 @@ _ALL_STAGES = [
     Stage.UPLOAD_MODEL,
 ]
 
-
 def get_stages(cfg: DictConfig) -> list[Stage]:
     # Overrides mode
     if "stages" in cfg and cfg["stages"]:
@@ -96,7 +95,7 @@ async def _main(cfg: DictConfig):
         coordinator = ModalSwarmCoordinator(org_id)
         training_id = get_training_id(address_eoa)
 
-        # Check that HF token exists and is non-empty. 
+        # Check that HF token exists and is non-empty.
         if not cfg["hf_token"]:
             raise ValueError("Missing hf_token in configuration.")
 
