@@ -4,6 +4,7 @@ import time
 import signal
 import sys
 
+import subprocess
 from subprocess import Popen
 from typing import List, Optional, Dict
 
@@ -81,7 +82,19 @@ def run_blockassist(env: Optional[Dict] = None):
     return process
 
 def send_blockassist_sigint(pid: int):
-    cmd = f"kill -s INT -- $(pgrep -P {pid})"
+    pid_cmd = Popen(f"pgrep -P {pid}", stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
+    pid_cmd.wait()
+    pid_child, _ = pid_cmd.communicate()
+    pid_child = pid_child.replace("\n", "")
+
+    # Hack because Linux runs a subshell of a subshell
+    if sys.platform == "linux" or sys.platform == "linux2":
+        pid_cmd = Popen(f"pgrep -P {pid_child}", stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
+        pid_cmd.wait()
+        pid_child, _ = pid_cmd.communicate()
+        pid_child = pid_child.replace("\n", "")
+
+    cmd = f"kill -s INT -- {pid_child}"
     process = Popen(cmd, shell=True)
     process.wait()
 
@@ -159,7 +172,8 @@ By Gensyn
 
     print("\nLOGIN")
     print("========")
-    print("You will likely be asked to approve accessibility permissions. Please do so and, if necessary, restart the program.")
+    if sys.platform == "darwin":
+        print("You will likely be asked to approve accessibility permissions. Please do so and, if necessary, restart the program.")
     proc_yarn = run_yarn()
     time.sleep(5)
     if not os.path.exists("modal-login/temp-data/userData.json"):
