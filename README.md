@@ -8,19 +8,61 @@ BlockAssist is a distributed extension of the paper [AssistanceZero: Scalably So
 
 *You only need to ever run these once, you can skip when running future tests*
 **Clone and enter repo**
-```
+```bash
 git clone git@github.com:gensyn-ai/blockassist-private.git
 cd blockassist-private
 ```
 
-**Ensure pyenv installed**
+**Install Java 1.8.0_152**
+```bash
+./setup.sh
 ```
+
+**Ensure pyenv installed**
+```bash
 brew update
 brew install pyenv
 ```
 
-**Ensure you have a Hugging Face token set**
+**Install Python 3.10**
+```bash
+pyenv install 3.10
 ```
+
+**Ensure you have a Hugging Face token set**
+```bash
+export HF_TOKEN=[your_token]
+```
+
+## Installation (Linux)
+
+*You only need to ever run these once, you can skip when running future tests*
+**Clone and enter repo**
+```bash
+git clone git@github.com:gensyn-ai/blockassist-private.git
+cd blockassist-private
+```
+
+**Install Java 1.8.0_152**
+```bash
+./setup.sh
+```
+
+**Ensure pyenv installed**
+```bash
+curl -fsSL https://pyenv.run | bash
+```
+
+NOTE: Follow the instructions `pyenv` gives about adding it to your shell!
+
+**Install Python 3.10**
+```bash
+apt install libbz2-dev libssl-dev libreadline-dev libncurses-dev libffi-dev # Dependencies for Python installation
+pyenv install 3.10
+```
+
+**Ensure you have a Hugging Face token set**
+```bash
 export HF_TOKEN=[your_token]
 ```
 
@@ -29,7 +71,7 @@ export HF_TOKEN=[your_token]
 Use `tail -f logs/[specific log].log` to monitor progress. `ls logs` to see options. Note, when asked to press enter, sometimes you need to do this a few times.
 
 **Run Python file**
-```
+```bash
 python run.py
 ```
 The program will install various dependencies, as required. Follow any instructions and approve all asks.
