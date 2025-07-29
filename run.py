@@ -5,6 +5,7 @@ import time
 import signal
 import subprocess
 import sys
+import threading
 
 from subprocess import Popen
 from typing import List, Optional, Dict
@@ -240,7 +241,8 @@ By Gensyn
     proc_yarn = run_yarn()
     time.sleep(5)
     if not os.path.exists("modal-login/temp-data/userData.json"):
-        print("Running Gensyn login modal")
+        print("Running Gensyn login. If browser does not open automatically, please open a browser and go to http://localhost:3000 and click 'login' to continue.")
+        print("Note, if it's your first time playing, also click 'log in')")
         run_open()
 
     env = wait_for_login()
@@ -248,8 +250,8 @@ By Gensyn
     print("\nSTART MINECRAFT")
     print("========")
     print("Please press ENTER when two Minecraft windows have opened. This may take up to 5 minutes to happen.")
-    print("NOTE: If one or both of the windows closes, please restart the program.")
-    print("If you don't see 'Enter received', press ENTER again.")
+    print("NOTE: If one or both of the windows closes, please restart the program. You can also `tail -f logs/malmo.log` in another terminal if you suspect an error")
+    print("If you don't see 'Enter received', press ENTER again and **you may have to press it multiple times**.")
     print("\nLoading...")
 
     input()
@@ -270,13 +272,29 @@ By Gensyn
     print("Use the WASD keys to move around")
     print("Once you've finished playing, press ESC, then click back on the terminal window")
     print("------")
-    print("\nPress ENTER when you have finished recording your episode")
-    print("After this point, the model will train on your episode data")
+    print("\nPress ENTER when you have finished recording your episode. **You may have to press it multiple times**")
 
     proc_blockassist = run_blockassist(env=env)
+    
+    # Start timer in a separate thread
+    timer_running = True
+    start_time = time.time()
+    
+    def timer_display():
+        while timer_running:
+            elapsed = int(time.time() - start_time)
+            hours = elapsed // 3600
+            minutes = (elapsed % 3600) // 60
+            seconds = elapsed % 60
+            print(f"\r⏱️  Recording time: {hours:02d}:{minutes:02d}:{seconds:02d}", end="", flush=True)
+            time.sleep(1)
+    
+    timer_thread = threading.Thread(target=timer_display, daemon=True)
+    timer_thread.start()
 
     input()
-    print("Enter received")
+    timer_running = False  # Stop the timer
+    print("\nEnter received")
 
     print("Stopping episode recording")
     send_blockassist_sigint(proc_blockassist.pid)
