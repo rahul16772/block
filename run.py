@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import time
 import signal
@@ -12,7 +13,15 @@ import psutil
 
 PROCESSES: List[Popen] = []
 
+import logging
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s',
+                    filename='logs/run.log',
+                    level=logging.DEBUG,
+                    datefmt='%Y-%m-%d %H:%M:%S')
+
+
 def create_logs_dir():
+    logging.info("Running create_logs_dir")
     if not os.path.exists("logs"):
         print("Creating logs directory")
         cmd = "mkdir -p logs"
@@ -24,6 +33,7 @@ def create_logs_dir():
         print("Logs directory already exists")
 
 def create_evaluate_dir():
+    logging.info("Running create_evaluate_dir")
     if not os.path.exists("data/base_checkpoint/evaluate"):
         print("Creating evaluate directory")
         cmd = "mkdir -p data/base_checkpoint/evaluate"
@@ -35,11 +45,13 @@ def create_evaluate_dir():
         print("Evaluate directory already exists")
 
 def kill_gradle_processes():
+    logging.info("Running kill_gradle_processes")
     cmd = "pkill -f gradle"
     process = Popen(cmd, shell=True)
     process.wait()
 
 def cleanup_processes():
+    logging.info("Running cleanup_processes")
     print("Cleaning up processes...")
     kill_gradle_processes()
     for proc in PROCESSES:
@@ -48,6 +60,7 @@ def cleanup_processes():
             proc.wait()
 
 def setup_venv():
+    logging.info("Running setup_venv")
     cmd = "./scripts/venv_setup.sh | tee logs/venv.log"
     process = Popen(cmd, shell=True)
     ret = process.wait()
@@ -55,6 +68,7 @@ def setup_venv():
         sys.exit(ret)
 
 def setup_gradle():
+    logging.info("Running setup_gradle")
     cmd = "./scripts/gradle_setup.sh"
     process = Popen(cmd, shell=True)
     PROCESSES.append(process)
@@ -63,6 +77,7 @@ def setup_gradle():
         sys.exit(ret)
 
 def setup_yarn():
+    logging.info("Running setup_yarn")
     cmd = "./scripts/yarn_setup.sh"
     process = Popen(cmd, shell=True)
     PROCESSES.append(process)
@@ -71,55 +86,66 @@ def setup_yarn():
         sys.exit(ret)
 
 def run_malmo():
+    logging.info("Running run_malmo")
     cmd = "./scripts/run_malmo.sh"
     process = Popen(cmd, shell=True)
     PROCESSES.append(process)
     return process
 
 def run_yarn():
+    logging.info("Running run_yarn")
     cmd = './scripts/yarn_run.sh'
     process = Popen(cmd, shell=True)
     PROCESSES.append(process)
     return process
 
 def run_open():
+    logging.info("Running run_open")
     cmd = "open http://localhost:3000 2> /dev/null"
     process = Popen(cmd, shell=True)
     PROCESSES.append(process)
     return process
 
 def run_blockassist(env: Optional[Dict] = None):
+    logging.info("Running run_blockassist")
     cmd = "./scripts/run_blockassist.sh"
     process = Popen(cmd, shell=True, env=env)
     PROCESSES.append(process)
     return process
 
 def send_blockassist_sigint(pid: int):
+    logging.info("Running send_blockassist_sigint")
     print("Sending SIGINT to BlockAssist process with PID:", pid)
 
     parent_process = psutil.Process(pid)
     if parent_process.is_running():
-        print(f"Parent process {pid} is running, attempting to send SIGINT to its children.")
+        logging.info(f"Parent process {pid} is running, attempting to send SIGINT to its children.")
 
     # Get all child processes of the parent process
     children = parent_process.children(recursive=True)
     if not children:
-        print(f"No child processes found for PID {pid}.")
+        logging.info(f"No child processes found for PID {pid}.")
         return
     
-    print(f"Found {len(children)} child processes for PID {pid}. Sending SIGINT to them.")
+    logging.info(f"Found {len(children)} child processes for PID {pid}. Sending SIGINT to them.")
     for child in children:
-        if child.name() == "python3.10":
+        logging.info(f"Got child process '{child.name()}' with pid {child.pid}")
+
+        if child.name() == "python3.10" or child.name() == "python":
             child.send_signal(signal.SIGINT)
-            print(f"Sent SIGINT to child process {child.pid} ({child.name()})")
+            logging.info(f"Sent SIGINT to child process {child.pid} ('{child.name()}')")
+        else:
+            logging.info(f"Child process '{child.name()}' was not targeted")
 
 def train_blockassist(env: Optional[Dict] = None):
+    logging.info("Running train_blockassist")
     cmd = "./scripts/train_blockassist.sh"
     process = Popen(cmd, shell=True, env=env)
     PROCESSES.append(process)
     return process
 
 def wait_for_login():
+    logging.info("Running wait_for_login")
     # Extract environment variables from userData.json
     print("Waiting for modal userData.json to be created...")
     user_data_path = "modal-login/temp-data/userData.json"
@@ -143,6 +169,7 @@ def wait_for_login():
     raise ValueError("No user data found in userData.json")
 
 def run():
+    logging.info("Running BlockAssist run.py script")
     print(
         '''
 ██████╗ ██╗      ██████╗  ██████╗██╗  ██╗   
@@ -164,10 +191,12 @@ By Gensyn
     )
 
     if os.environ.get("HF_TOKEN") is None:
+        logging.info("HF_TOKEN not found, prompting")
         print("Please enter your Hugging Face token and press ENTER. If you don't have one, just press ENTER to find out how.")
         hf_token = input("Hugging Face token: ").strip()
         
         if not hf_token:
+            logging.info("Empty HF_TOKEN provided, opening docs")
             print("Opening Hugging Face documentation to create a token...")
             if sys.platform == "darwin":
                 cmd = "open https://huggingface.co/docs/hub/en/security-tokens#how-to-manage-user-access-tokens"
