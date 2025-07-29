@@ -164,10 +164,27 @@ By Gensyn
     )
 
     if os.environ.get("HF_TOKEN") is None:
-        print("Please set the HF_TOKEN environment variable to your Hugging Face token in your ~/.bashrc or ~/.zshrc (Mac) file")
-        print("Example:")
-        print("export HF_TOKEN='your_token_here'")
-        sys.exit(1)
+        print("Please enter your Hugging Face token and press ENTER. If you don't have one, just press ENTER to find out how.")
+        hf_token = input("Hugging Face token: ").strip()
+        
+        if not hf_token:
+            print("Opening Hugging Face documentation to create a token...")
+            if sys.platform == "darwin":
+                cmd = "open https://huggingface.co/docs/hub/en/security-tokens#how-to-manage-user-access-tokens"
+            elif sys.platform == "linux" or sys.platform == "linux2":
+                cmd = "xdg-open https://huggingface.co/docs/hub/en/security-tokens#how-to-manage-user-access-tokens"
+            else:
+                print("Please visit: https://huggingface.co/docs/hub/en/security-tokens#how-to-manage-user-access-tokens")
+                print("After creating your token, restart this program and enter it when prompted.")
+                sys.exit(0)
+            
+            process = Popen(cmd, shell=True)
+            process.wait()
+            print("After creating your token, restart this program and enter it when prompted.")
+            sys.exit(0)
+        else:
+            os.environ["HF_TOKEN"] = hf_token
+            print("✅ HF_TOKEN set successfully")
 
     print("Creating directories...")
     create_logs_dir()
