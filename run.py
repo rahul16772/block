@@ -18,7 +18,20 @@ def create_logs_dir():
         if ret != 0:
             sys.exit(ret)
     else:
-        print("Logs directory already exists")   
+        print("Logs directory already exists")
+
+def kill_gradle_processes():
+    cmd = "pkill -f gradle"
+    process = Popen(cmd, shell=True)
+    process.wait()
+
+def cleanup_processes():
+    print("Cleaning up processes...")
+    kill_gradle_processes()
+    for proc in PROCESSES:
+        if proc.poll() is None:  # Process is still running
+            proc.kill()
+            proc.wait()
 
 def setup_venv():
     cmd = "./scripts/venv_setup.sh | tee logs/venv.log"
@@ -178,7 +191,8 @@ By Gensyn
     print("Select an axe to break things, or various blocks, by pressing the number keys 1-9")
     print("Use the WASD keys to move around")
     print("Once you've finished playing, press ESC, then click back on the terminal window")
-    print("Press ENTER when you have finished recording your episode")
+    print("------")
+    print("\nPress ENTER when you have finished recording your episode")
     print("After this point, the model will train on your episode data")
 
     proc_blockassist = run_blockassist(env=env)
@@ -207,7 +221,7 @@ By Gensyn
     print("Training complete")
     print("Data submitted to Hugging Face and the smart contract")
 
-    print("\SHUTTING DOWN")
+    print("\nSHUTTING DOWN")
     print("========")
     print("Stopping Yarn")
     proc_yarn.kill()
@@ -216,9 +230,11 @@ By Gensyn
 if __name__ == "__main__":
     try:
         run()
+        kill_gradle_processes()
         for proc in PROCESSES:
             proc.wait()
     except KeyboardInterrupt:
+        kill_gradle_processes()
         for proc in PROCESSES:
             proc.kill()
             proc.wait()
