@@ -1,6 +1,8 @@
 from pathlib import Path
 
 import boto3
+from botocore import UNSIGNED
+from botocore.client import Config
 
 from blockassist.globals import get_logger
 
@@ -19,7 +21,7 @@ def upload_zip_to_s3(
         s3_key = zip_path.name
 
     try:
-        s3_client = boto3.client("s3")
+        s3_client = boto3.client("s3", config=Config(signature_version=UNSIGNED))
         s3_client.upload_file(str(zip_path), bucket_name, s3_key)
         s3_uri = f"s3://{bucket_name}/{s3_key}"
         _LOG.info(f"Successfully uploaded to {s3_uri}")

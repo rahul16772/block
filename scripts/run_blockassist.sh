@@ -23,4 +23,4 @@ fi
 
 . blockassist-venv/bin/activate
 
-python -m blockassist.launch +stages=[backup_evaluate,clean_evaluate,restore_backup,episode,upload_episodes] > logs/blockassist.log 2>&1
+python -m blockassist.launch +stages=[backup_evaluate,clean_evaluate,episode,upload_episodes] > logs/blockassist.log 2>&1
