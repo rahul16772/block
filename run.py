@@ -21,6 +21,17 @@ def create_logs_dir():
     else:
         print("Logs directory already exists")
 
+def create_evaluate_dir():
+    if not os.path.exists("data/base_checkpoint/evaluate"):
+        print("Creating evaluate directory")
+        cmd = "mkdir -p data/base_checkpoint/evaluate"
+        process = Popen(cmd, shell=True)
+        ret = process.wait()
+        if ret != 0:
+            sys.exit(ret)
+    else:
+        print("Evaluate directory already exists")
+
 def kill_gradle_processes():
     cmd = "pkill -f gradle"
     process = Popen(cmd, shell=True)
@@ -154,7 +165,9 @@ By Gensyn
         print("export HF_TOKEN='your_token_here'")
         sys.exit(1)
 
+    print("Creating directories...")
     create_logs_dir()
+    create_evaluate_dir()
     
     print("Setting up virtualenv...")
     setup_venv()
