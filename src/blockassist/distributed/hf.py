@@ -2,7 +2,7 @@ from pathlib import Path
 
 from huggingface_hub import HfApi
 
-from blockassist.globals import get_logger
+from blockassist.globals import get_logger, get_identifier
 from blockassist import telemetry
 import io
 import json
@@ -10,15 +10,26 @@ import json
 
 _LOG = get_logger()
 
-def _create_readme(model_path: Path) -> None:
+def _create_readme(model_path: Path, user_id: str | None = None) -> None:
     readme_path = model_path / "README.md"
-    front_matter = """\
+    
+    # Generate identifier tag from address if provided
+    tags = [
+        "gensyn",
+        "blockassist", 
+        "gensyn-blockassist",
+        "minecraft"
+    ]
+
+    if user_id:
+        tags.append(user_id.replace("_", " "))
+    
+    # Create YAML front matter with tags
+    tags_yaml = "\n".join(f"  - {tag}" for tag in tags)
+    front_matter = f"""\
 ---
 tags:
-  - gensyn
-  - blockassist
-  - gensyn-blockassist
-  - minecraft
+{tags_yaml}
 ---
 
 """
@@ -28,18 +39,21 @@ tags:
 Gensyn's BlockAssist is a distributed extension of the paper [AssistanceZero: Scalably Solving Assistance Games](https://arxiv.org/abs/2504.07091).
 """
     readme_path.write_text(front_matter + body, encoding="utf-8")
-    _LOG.info(f"Created README.md with YAML metadata at {readme_path!r}")
-
-
+    _LOG.info(f"Created README.md with YAML metadata and tags {tags} at {readme_path!r}")
 
 def upload_to_huggingface(
-    model_path: Path, user_id: str, repo_id: str, hf_token: str | None = None, chain_metadata_dict: dict | None = None,
+    model_path: Path, 
+    user_id: str, 
+    repo_id: str, 
+    hf_token: str | None = None, 
+    chain_metadata_dict: dict | None = None,
+    address_eoa: str | None = None,
 ) -> None:
     if not model_path.exists():
         raise FileNotFoundError(f"Model directory does not exist: {model_path}")
 
     try:
-        _create_readme(model_path)
+        _create_readme(model_path, user_id=user_id)
         api = HfApi(token=hf_token)
         api.create_repo(repo_id=repo_id, repo_type="model", exist_ok=True, private=True)
         api.upload_folder(repo_id=repo_id, repo_type="model", folder_path=model_path)

@@ -3,6 +3,7 @@
 set -e -u
 set -o pipefail
 
+export SMART_CONTRACT_ADDRESS="0xa6834217923D7A2A0539575CFc67abA209E6436F"
 # Test if file exists, if so, source .env
 if [[ -f "$PWD"/.env ]]; then
     source "$PWD"/.env
