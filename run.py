@@ -9,6 +9,17 @@ from typing import List, Optional, Dict
 
 PROCESSES: List[Popen] = []
 
+def create_logs_dir():
+    if not os.path.exists("logs"):
+        print("Creating logs directory")
+        cmd = "mkdir -p logs"
+        process = Popen(cmd, shell=True)
+        ret = process.wait()
+        if ret != 0:
+            sys.exit(ret)
+    else:
+        print("Logs directory already exists")   
+
 def setup_venv():
     cmd = "./scripts/venv_setup.sh | tee logs/venv.log"
     process = Popen(cmd, shell=True)
@@ -98,6 +109,9 @@ def run():
         print("Example:")
         print("export HF_TOKEN='your_token_here'")
         sys.exit(1)
+
+    print("Checking for logs directory")
+    create_logs_dir()
 
     print("Setting up virtualenv")
     setup_venv()
