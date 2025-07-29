@@ -29,6 +29,11 @@ brew install pyenv
 pyenv install 3.10
 ```
 
+**Install psutil**
+```bash
+pip install psutil
+```
+
 **Ensure you have a Hugging Face token set**
 ```bash
 export HF_TOKEN=[your_token]
@@ -59,6 +64,11 @@ NOTE: Follow the instructions `pyenv` gives about adding it to your shell!
 ```bash
 apt install libbz2-dev libssl-dev libreadline-dev libncurses-dev libffi-dev # Dependencies for Python installation
 pyenv install 3.10
+```
+
+**Install psutil**
+```bash
+pip install psutil
 ```
 
 **Ensure you have a Hugging Face token set**

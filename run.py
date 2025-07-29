@@ -2,11 +2,13 @@ import json
 import os
 import time
 import signal
+import subprocess
 import sys
 
-import subprocess
 from subprocess import Popen
 from typing import List, Optional, Dict
+
+import psutil
 
 PROCESSES: List[Popen] = []
 
@@ -93,21 +95,23 @@ def run_blockassist(env: Optional[Dict] = None):
     return process
 
 def send_blockassist_sigint(pid: int):
-    pid_cmd = Popen(f"pgrep -P {pid}", stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
-    pid_cmd.wait()
-    pid_child, _ = pid_cmd.communicate()
-    pid_child = pid_child.replace("\n", "")
+    print("Sending SIGINT to BlockAssist process with PID:", pid)
 
-    # Hack because Linux runs a subshell of a subshell
-    if sys.platform == "linux" or sys.platform == "linux2":
-        pid_cmd = Popen(f"pgrep -P {pid_child}", stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
-        pid_cmd.wait()
-        pid_child, _ = pid_cmd.communicate()
-        pid_child = pid_child.replace("\n", "")
+    parent_process = psutil.Process(pid)
+    if parent_process.is_running():
+        print(f"Parent process {pid} is running, attempting to send SIGINT to its children.")
 
-    cmd = f"kill -s INT -- {pid_child}"
-    process = Popen(cmd, shell=True)
-    process.wait()
+    # Get all child processes of the parent process
+    children = parent_process.children(recursive=True)
+    if not children:
+        print(f"No child processes found for PID {pid}.")
+        return
+    
+    print(f"Found {len(children)} child processes for PID {pid}. Sending SIGINT to them.")
+    for child in children:
+        if child.name() == "python3.10":
+            child.send_signal(signal.SIGINT)
+            print(f"Sent SIGINT to child process {child.pid} ({child.name()})")
 
 def train_blockassist(env: Optional[Dict] = None):
     cmd = "./scripts/train_blockassist.sh"
