@@ -102,7 +102,25 @@ def wait_for_login():
     raise ValueError("No user data found in userData.json")
 
 def run():
-    print("Welcome to Blockassist")
+    print(
+        '''
+██████╗ ██╗      ██████╗  ██████╗██╗  ██╗   
+██╔══██╗██║     ██╔═══██╗██╔════╝██║ ██╔╝   
+██████╔╝██║     ██║   ██║██║     █████╔╝    
+██╔══██╗██║     ██║   ██║██║     ██╔═██╗    
+██████╔╝███████╗╚██████╔╝╚██████╗██║  ██╗   
+╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝   
+                                            
+ █████╗ ███████╗███████╗██╗███████╗████████╗
+██╔══██╗██╔════╝██╔════╝██║██╔════╝╚══██╔══╝
+███████║███████╗███████╗██║███████╗   ██║   
+██╔══██║╚════██║╚════██║██║╚════██║   ██║   
+██║  ██║███████║███████║██║███████║   ██║   
+╚═╝  ╚═╝╚══════╝╚══════╝╚═╝╚══════╝   ╚═╝   
+                                    
+By Gensyn
+        '''
+    )
 
     if os.environ.get("HF_TOKEN") is None:
         print("Please set the HF_TOKEN environment variable to your Hugging Face token in your ~/.bashrc or ~/.zshrc (Mac) file")
@@ -110,23 +128,25 @@ def run():
         print("export HF_TOKEN='your_token_here'")
         sys.exit(1)
 
-    print("Checking for logs directory")
+    print("Setting up virtualenv...")
+    setup_venv()
+    
     create_logs_dir()
 
-    print("Setting up virtualenv")
-    setup_venv()
-
-    print("Setting up Gradle")
+    print("Setting up Gradle...")
     setup_gradle()
 
-    print("Compiling Yarn")
+    print("Compiling Yarn...")
 
     setup_yarn()
 
-    print("Done setting up Yarn")
-
+    print("Setting up Minecraft...")
     proc_malmo = run_malmo()
+    
 
+    print("\nLOGIN")
+    print("========")
+    print("You will likely be asked to approve accessibility permissions. Please do so and, if necessary, restart the program.")
     proc_yarn = run_yarn()
     time.sleep(5)
     if not os.path.exists("modal-login/temp-data/userData.json"):
@@ -135,13 +155,34 @@ def run():
 
     env = wait_for_login()
 
-    print("Please press ENTER when two Minecraft windows have opened. This may take up to 5 minutes to happen")
+    print("\nSTART MINECRAFT")
+    print("========")
+    print("Please press ENTER when two Minecraft windows have opened. This may take up to 5 minutes to happen.")
+    print("If you don't see 'Enter received', press ENTER again.")
+    print("\nLoading...")
+
     input()
     print("Enter received")
+    
+    print("\nINSTRUCTIONS")
+    print("========")
+    time.sleep(1)
+    print("The goal of the game is to build the structure in front of you.")
+    print("You do this by placing or destroying blocks.")
+    print("Each building you build is a separate 'episode'")
+    print("An AI player will assist you.")
+    print("The more you play, the more the AI player learns.")
+    print("You should break red blocks and place blocks where indicated")
+    print("Click on the window and press ENTER to start playing")
+    print("Left click to break blocks, right click to place blocks")
+    print("Select an axe to break things, or various blocks, by pressing the number keys 1-9")
+    print("Use the WASD keys to move around")
+    print("Once you've finished playing, press ESC, then click back on the terminal window")
+    print("Press ENTER when you have finished recording your episode")
+    print("After this point, the model will train on your episode data")
 
     proc_blockassist = run_blockassist(env=env)
 
-    print("Press ENTER when you have finished recording your episode")
     input()
     print("Enter received")
 
@@ -149,19 +190,25 @@ def run():
     send_blockassist_sigint(proc_blockassist.pid)
 
     print("Stopping Malmo")
-    print("You can close the two Minecraft windows, now")
     proc_malmo.kill()
     proc_malmo.wait()
 
     print("Waiting for BlockAssist to stop")
     proc_blockassist.wait()
 
+    print("\nMODEL TRAINING")
+    print("========")
+    print("Your assistant is now training on the gameplay you recorded.")
+    print("This may take a while, depending on your hardware. Please keep this window open until you see 'Training complete'.")
     print("Running training")
     proc_train = train_blockassist(env=env)
     proc_train.wait()
 
     print("Training complete")
+    print("Data submitted to Hugging Face and the smart contract")
 
+    print("\SHUTTING DOWN")
+    print("========")
     print("Stopping Yarn")
     proc_yarn.kill()
 
