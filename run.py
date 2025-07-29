@@ -15,11 +15,6 @@ import psutil
 PROCESSES: List[Popen] = []
 
 import logging
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s',
-                    filename='logs/run.log',
-                    level=logging.DEBUG,
-                    datefmt='%Y-%m-%d %H:%M:%S')
-
 
 def create_logs_dir():
     logging.info("Running create_logs_dir")
@@ -219,6 +214,11 @@ By Gensyn
     print("Creating directories...")
     create_logs_dir()
     create_evaluate_dir()
+
+    logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s',
+                    filename='logs/run.log',
+                    level=logging.DEBUG,
+                    datefmt='%Y-%m-%d %H:%M:%S')
     
     print("Setting up virtualenv...")
     setup_venv()
