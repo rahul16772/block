@@ -141,10 +141,10 @@ By Gensyn
         print("export HF_TOKEN='your_token_here'")
         sys.exit(1)
 
+    create_logs_dir()
+    
     print("Setting up virtualenv...")
     setup_venv()
-    
-    create_logs_dir()
 
     print("Setting up Gradle...")
     setup_gradle()
