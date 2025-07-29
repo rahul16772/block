@@ -34,7 +34,7 @@ pyenv install 3.10
 pip install psutil
 ```
 
-**Ensure you have a Hugging Face token set**
+**Ensure you have a Hugging Face token set (with read and write permissions)**
 ```bash
 export HF_TOKEN=[your_token]
 ```
@@ -76,7 +76,7 @@ pip install psutil
 export HF_TOKEN=[your_token]
 ```
 
-## Run BlockAssist 
+## Run BlockAssist
 
 Use `tail -f logs/[specific log].log` to monitor progress. `ls logs` to see options. Note, when asked to press enter, sometimes you need to do this a few times.
 
@@ -92,7 +92,7 @@ You will be prompted to log in via the modal. If you have previously logged in, 
 
 **Play a few seconds of Minecraft**
 
-Once the minecraft windows have loaded it will ask you to click enter. 
+Once the minecraft windows have loaded it will ask you to click enter.
 
 Go to the minecraft window which is showing (one will be minimised). Click the window. Press enter. Move around a bit. Press escape. Go back to the terminal window. Press enter again, as prompted.
 
