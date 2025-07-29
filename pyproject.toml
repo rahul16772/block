@@ -19,6 +19,7 @@ dependencies = [
   "hydra-core",
   "mbag-gensyn[rllib,malmo]",
   "numpy>=1.21,<1.22",
+  "readchar",
   "requests",
   "six",
   "pydantic",

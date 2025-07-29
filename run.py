@@ -3,9 +3,9 @@ import logging
 import os
 import time
 import signal
-import subprocess
 import sys
 import threading
+import readchar
 
 from subprocess import Popen
 from typing import List, Optional, Dict
@@ -14,7 +14,6 @@ import psutil
 
 PROCESSES: List[Popen] = []
 
-import logging
 
 def create_logs_dir():
     logging.info("Running create_logs_dir")
@@ -109,6 +108,21 @@ def run_blockassist(env: Optional[Dict] = None):
     PROCESSES.append(process)
     return process
 
+
+_ENTER_KEYS = ('\r', '\n')
+def wait_for_enter(on_received=None):
+    wait_for_keys(keys=_ENTER_KEYS, on_received=on_received)
+
+def wait_for_keys(keys=_ENTER_KEYS, on_received=None):
+    while True:
+        char = readchar.readchar()
+        if char in keys:  # Enter key
+            if on_received:
+                on_received(char)
+            break
+        else:
+            print(f"Unknown key pressed: {repr(char)}. Please press a valid key in ({keys}) to continue.")
+
 def send_blockassist_sigint(pid: int):
     logging.info("Running send_blockassist_sigint")
     print("Sending SIGINT to BlockAssist process with PID:", pid)
@@ -122,7 +136,7 @@ def send_blockassist_sigint(pid: int):
     if not children:
         logging.info(f"No child processes found for PID {pid}.")
         return
-    
+
     logging.info(f"Found {len(children)} child processes for PID {pid}. Sending SIGINT to them.")
     for child in children:
         logging.info(f"Got child process '{child.name()}' with pid {child.pid}")
@@ -152,36 +166,36 @@ def wait_for_login():
     # Read and parse the JSON file
     with open(user_data_path, 'r') as f:
         user_data = json.load(f)
-    
+
     for k in user_data.keys():
         d = os.environ.copy()
-        
+
         d["BA_ORG_ID"] = user_data[k].get("orgId", '')
         d["BA_ADDRESS_EOA"] = user_data[k].get("address", '')
         d["PYTHONWARNINGS"] = 'ignore::DeprecationWarning'
-        
+
         return d
-    
+
     raise ValueError("No user data found in userData.json")
 
 def run():
     logging.info("Running BlockAssist run.py script")
     print(
         '''
-██████╗ ██╗      ██████╗  ██████╗██╗  ██╗   
-██╔══██╗██║     ██╔═══██╗██╔════╝██║ ██╔╝   
-██████╔╝██║     ██║   ██║██║     █████╔╝    
-██╔══██╗██║     ██║   ██║██║     ██╔═██╗    
-██████╔╝███████╗╚██████╔╝╚██████╗██║  ██╗   
-╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝   
-                                            
+██████╗ ██╗      ██████╗  ██████╗██╗  ██╗
+██╔══██╗██║     ██╔═══██╗██╔════╝██║ ██╔╝
+██████╔╝██║     ██║   ██║██║     █████╔╝
+██╔══██╗██║     ██║   ██║██║     ██╔═██╗
+██████╔╝███████╗╚██████╔╝╚██████╗██║  ██╗
+╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝
+
  █████╗ ███████╗███████╗██╗███████╗████████╗
 ██╔══██╗██╔════╝██╔════╝██║██╔════╝╚══██╔══╝
-███████║███████╗███████╗██║███████╗   ██║   
-██╔══██║╚════██║╚════██║██║╚════██║   ██║   
-██║  ██║███████║███████║██║███████║   ██║   
-╚═╝  ╚═╝╚══════╝╚══════╝╚═╝╚══════╝   ╚═╝   
-                                    
+███████║███████╗███████╗██║███████╗   ██║
+██╔══██║╚════██║╚════██║██║╚════██║   ██║
+██║  ██║███████║███████║██║███████║   ██║
+╚═╝  ╚═╝╚══════╝╚══════╝╚═╝╚══════╝   ╚═╝
+
 By Gensyn
         '''
     )
@@ -189,8 +203,9 @@ By Gensyn
     if os.environ.get("HF_TOKEN") is None:
         logging.info("HF_TOKEN not found, prompting")
         print("Please enter your Hugging Face token and press ENTER. If you don't have one, just press ENTER to find out how.")
+        print("Hugging Face token: ", end="", flush=True)
         hf_token = input("Hugging Face token: ").strip()
-        
+
         if not hf_token:
             logging.info("Empty HF_TOKEN provided, opening docs")
             print("Opening Hugging Face documentation to create a token...")
@@ -202,7 +217,7 @@ By Gensyn
                 print("Please visit: https://huggingface.co/docs/hub/en/security-tokens#how-to-manage-user-access-tokens")
                 print("After creating your token, restart this program and enter it when prompted.")
                 sys.exit(0)
-            
+
             process = Popen(cmd, shell=True)
             process.wait()
             print("After creating your token, restart this program and enter it when prompted.")
@@ -219,7 +234,7 @@ By Gensyn
                     filename='logs/run.log',
                     level=logging.DEBUG,
                     datefmt='%Y-%m-%d %H:%M:%S')
-    
+
     print("Setting up virtualenv...")
     setup_venv()
 
@@ -232,7 +247,7 @@ By Gensyn
 
     print("Setting up Minecraft...")
     proc_malmo = run_malmo()
-    
+
 
     print("\nLOGIN")
     print("========")
@@ -251,12 +266,10 @@ By Gensyn
     print("========")
     print("Please press ENTER when two Minecraft windows have opened. This may take up to 5 minutes to happen.")
     print("NOTE: If one or both of the windows closes, please restart the program. You can also `tail -f logs/malmo.log` in another terminal if you suspect an error")
-    print("If you don't see 'Enter received', press ENTER again and **you may have to press it multiple times**.")
     print("\nLoading...")
-
-    input()
+    wait_for_enter()
     print("Enter received")
-    
+
     print("\nINSTRUCTIONS")
     print("========")
     time.sleep(1)
@@ -272,14 +285,13 @@ By Gensyn
     print("Use the WASD keys to move around")
     print("Once you've finished playing, press ESC, then click back on the terminal window")
     print("------")
-    print("\nPress ENTER when you have finished recording your episode. **You may have to press it multiple times**")
+    print("\nPress ENTER when you have finished recording your episode.")
 
     proc_blockassist = run_blockassist(env=env)
-    
-    # Start timer in a separate thread
+
+    # Start timer in a separate thread with rich display
     timer_running = True
     start_time = time.time()
-    
     def timer_display():
         while timer_running:
             elapsed = int(time.time() - start_time)
@@ -288,15 +300,18 @@ By Gensyn
             seconds = elapsed % 60
             print(f"\r⏱️  Recording time: {hours:02d}:{minutes:02d}:{seconds:02d}", end="", flush=True)
             time.sleep(1)
-    
+
+
+    def timer_end(key):
+        nonlocal timer_running
+        timer_running = False
+
     timer_thread = threading.Thread(target=timer_display, daemon=True)
     timer_thread.start()
 
-    input()
-    timer_running = False  # Stop the timer
-    print("\nEnter received")
+    wait_for_enter(timer_end)
 
-    print("Stopping episode recording")
+    print("\nStopping episode recording")
     send_blockassist_sigint(proc_blockassist.pid)
 
     print("Stopping Malmo")
@@ -317,24 +332,24 @@ By Gensyn
     print("Training complete")
 
     print("\nUPLOAD TO HUGGINGFACE AND SMART CONTRACT")
-    print("========")    
+    print("========")
     # Monitor blockassist-train.log for HuggingFace upload confirmation and transaction hash
     print("Checking for upload confirmation and transaction hash...")
     train_log_path = "logs/blockassist-train.log"
     upload_confirmed = False
     transaction_hash = None
-    
+
     # Wait up to 30 seconds for the logs to appear
     for attempt in range(30):
         time.sleep(1)
-        
+
         try:
             # Check blockassist-train.log for both logs
             if os.path.exists(train_log_path):
                 with open(train_log_path, 'r') as f:
                     lines = f.readlines()
                     last_15_lines = lines[-15:] if len(lines) >= 15 else lines
-                
+
                 for line in last_15_lines:
                     line = line.strip()
                     if "Successfully uploaded model to HuggingFace:" in line and not upload_confirmed:
@@ -343,16 +358,16 @@ By Gensyn
                     elif "HF Upload API response:" in line and not transaction_hash:
                         print("🔗 " + line)
                         transaction_hash = line
-            
+
             # If we found both, we can stop monitoring
             if upload_confirmed and transaction_hash:
                 print("Copy your HuggingFace model path (e.g. 'block-fielding/bellowing_pouncing_horse_1753796381') and check for it here:\nhttps://gensyn-testnet.explorer.alchemy.com/address/0xa6834217923D7A2A0539575CFc67abA209E6436F?tab=logs")
                 break
-                
+
         except Exception as e:
             print(f"Error reading log file: {e}")
             break
-    
+
     # If we didn't find the logs after 30 seconds
     if not upload_confirmed and not transaction_hash:
         print("⚠️ No upload confirmation or transaction hash found in blockassist-train.log")
