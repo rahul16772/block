@@ -9,7 +9,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     PID="$(lsof -nP -iTCP:10001 | awk '$2 ~ /^[0-9]+$/ { print $2; exit }')"
     # Now tell System Events to minimize every window of that process by ID. If it fails, reset Terminal preferences for the next time this script is run and continue
     {
-    osascript <<EOF
+    osascript <<EOF 2>/dev/null
 tell application "System Events"
     tell (first process whose unix id is $PID)
         repeat with w in windows
@@ -18,7 +18,7 @@ tell application "System Events"
     end tell
 end tell
 EOF
-    } || echo "osascript failed to minimize window, trying to reset Terminal preferences: `tccutil reset AppleEvents com.apple.Terminal`"
+    } || echo ""
 fi
 
 . blockassist-venv/bin/activate
