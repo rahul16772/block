@@ -246,7 +246,6 @@ By Gensyn
     print("========")
     print("Please press ENTER when two Minecraft windows have opened. This may take up to 5 minutes to happen.")
     print("NOTE: If one or both of the windows closes, please restart the program. You can also `tail -f logs/malmo.log` in another terminal if you suspect an error")
-    print("\nLoading...")
     wait_for_enter()
     print("Enter received")
 
@@ -295,7 +294,7 @@ By Gensyn
             timer_running = False
 
 
-        print(f"\n[{i}] Press ENTER when you have finished recording your episode. **You may have to press it multiple times**")
+        print(f"\n[{i}] Please wait for the mission to load up on your Minecraft window. Press ENTER when you have finished recording your episode. **You may have to press it multiple times**")
         wait_for_enter(timer_end)
         print(f"\n[{i}] Enter received")
 
