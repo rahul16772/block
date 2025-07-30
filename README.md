@@ -58,7 +58,8 @@ NOTE: Follow the instructions `pyenv` gives about adding it to your shell!
 
 **Install Python 3.10**
 ```bash
-sudo apt install libbz2-dev libssl-dev libreadline-dev libncurses-dev libffi-dev # Dependencies for Python installation
+sudo apt update
+sudo apt install make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev curl git libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev # Dependencies for Python installation
 pyenv install 3.10
 ```
 
