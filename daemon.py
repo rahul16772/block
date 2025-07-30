@@ -16,15 +16,45 @@ PROCESSES: List[Popen] = []
 
 def kill_gradle_processes():
     logging.info("Running kill_gradle_processes")
+    # First try regular kill
     cmd = "pkill -f gradle"
     process = Popen(cmd, shell=True)
     process.wait()
+    
+    # Force kill any remaining gradle processes
+    cmd_force = "pkill -9 -f gradle"
+    process_force = Popen(cmd_force, shell=True)
+    process_force.wait()
+
+
+def kill_dev_servers():
+    """Kill development servers (Next.js, yarn dev, etc.)"""
+    logging.info("Running kill_dev_servers")
+    # Kill Next.js development servers
+    cmd_next = "pkill -f 'next-server'"
+    process_next = Popen(cmd_next, shell=True)
+    process_next.wait()
+    
+    # Kill yarn dev processes
+    cmd_yarn = "pkill -f 'yarn dev'"
+    process_yarn = Popen(cmd_yarn, shell=True)
+    process_yarn.wait()
+    
+    # Force kill any remaining dev server processes
+    cmd_next_force = "pkill -9 -f 'next-server'"
+    process_next_force = Popen(cmd_next_force, shell=True)
+    process_next_force.wait()
+    
+    cmd_yarn_force = "pkill -9 -f 'yarn dev'"
+    process_yarn_force = Popen(cmd_yarn_force, shell=True)
+    process_yarn_force.wait()
 
 
 def cleanup_processes(processes=PROCESSES):
     logging.info("Running cleanup_processes")
     print("Cleaning up processes...")
     kill_gradle_processes()
+    kill_dev_servers()
     for proc in processes:
         if proc.poll() is None:  # Process is still running
             proc.kill()

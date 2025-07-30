@@ -287,6 +287,7 @@ By Gensyn
 
     for i in range(_MAX_EPISODE_COUNT):
         # Start timer in a separate thread
+        print("\nSTARTING EPISODE {}".format(i))
         timer_running = True
         start_time = time.time()
 
@@ -318,7 +319,7 @@ By Gensyn
     proc_malmo.kill()
     proc_malmo.wait()
 
-    print("Waiting for BlockAssist to stop")
+    print("Waiting for BlockAssist to stop - this might take a few minutes")
     proc_blockassist.wait()
 
     print("\nMODEL TRAINING")
