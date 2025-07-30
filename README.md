@@ -62,9 +62,9 @@ sudo apt install libbz2-dev libssl-dev libreadline-dev libncurses-dev libffi-dev
 pyenv install 3.10
 ```
 
-**Install psutil**
+**Install psutil and readchar**
 ```bash
-pip install psutil
+pip install psutil readchar
 ```
 
 ## Run BlockAssist
