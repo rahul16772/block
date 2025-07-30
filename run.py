@@ -16,27 +16,23 @@ import psutil
 from daemon import PROCESSES, cleanup_processes, start_log_watcher
 
 def create_logs_dir(clear_existing=True):
-    logging.info("Running create_logs_dir")
-    if not os.path.exists("logs"):
-        print("Creating logs directory")
-        cmd = "mkdir -p logs"
+    if os.path.exists("logs") and clear_existing:
+        print("Clearing existing logs directory")
+        cmd = "rm -rf logs"
         process = Popen(cmd, shell=True)
         ret = process.wait()
         if ret != 0:
             sys.exit(ret)
-    else:
-        print("Logs directory already exists")
-        if clear_existing:
-            print("Clearing existing logs directory")
-            cmd = "rm -f logs/*"
-            process = Popen(cmd, shell=True)
-            ret = process.wait()
-            if ret != 0:
-                sys.exit(ret)
+
+    print("Creating logs directory")
+    cmd = "mkdir -p logs"
+    process = Popen(cmd, shell=True)
+    ret = process.wait()
+    if ret != 0:
+        sys.exit(ret)
 
 
 def create_evaluate_dir():
-    logging.info("Running create_evaluate_dir")
     if not os.path.exists("data/base_checkpoint/evaluate"):
         print("Creating evaluate directory")
         cmd = "mkdir -p data/base_checkpoint/evaluate"
@@ -172,6 +168,15 @@ def wait_for_login():
     raise ValueError("No user data found in userData.json")
 
 def run():
+    print("Creating directories...")
+    create_logs_dir(clear_existing=True)
+    create_evaluate_dir()
+
+    logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s',
+                    filename='logs/run.log',
+                    level=logging.DEBUG,
+                    datefmt='%Y-%m-%d %H:%M:%S')
+    
     logging.info("Running BlockAssist run.py script")
     print(
         '''
@@ -208,15 +213,6 @@ By Gensyn
 
         os.environ["HF_TOKEN"] = hf_token
         print("✅ HF_TOKEN set successfully")
-
-    print("Creating directories...")
-    create_logs_dir(clear_existing=True)
-    create_evaluate_dir()
-
-    logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s',
-                    filename='logs/run.log',
-                    level=logging.DEBUG,
-                    datefmt='%Y-%m-%d %H:%M:%S')
 
     print("Setting up virtualenv...")
     setup_venv()
