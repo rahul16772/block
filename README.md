@@ -37,6 +37,7 @@ pip install psutil
 ## Installation (Linux)
 
 *You only need to ever run these once, you can skip when running future tests*
+
 **Clone and enter repo**
 ```bash
 git clone git@github.com:gensyn-ai/blockassist-private.git
