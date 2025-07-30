@@ -34,11 +34,6 @@ pyenv install 3.10
 pip install psutil
 ```
 
-**Ensure you have a Hugging Face token set (with read and write permissions)**
-```bash
-export HF_TOKEN=[your_token]
-```
-
 ## Installation (Linux)
 
 *You only need to ever run these once, you can skip when running future tests*
@@ -69,11 +64,6 @@ pyenv install 3.10
 **Install psutil**
 ```bash
 pip install psutil
-```
-
-**Ensure you have a Hugging Face token set**
-```bash
-export HF_TOKEN=[your_token]
 ```
 
 ## Run BlockAssist

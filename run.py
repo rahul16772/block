@@ -195,8 +195,7 @@ By Gensyn
 
     if os.environ.get("HF_TOKEN") is None:
         logging.info("HF_TOKEN not found, prompting")
-        print("Please enter your Hugging Face token and press ENTER. If you don't have one, just press ENTER to find out how.")
-        print("Hugging Face token: ", end="", flush=True)
+        print("Please enter your Hugging Face user access token and press ENTER. If you don't have one, just press ENTER to find out how to get it.")
         hf_token = input("Hugging Face token: ").strip()
 
         if not hf_token:
