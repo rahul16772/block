@@ -29,9 +29,9 @@ brew install pyenv
 pyenv install 3.10
 ```
 
-**Install psutil**
+**Install psutil and readchar**
 ```bash
-pip install psutil
+pyenv exec pip install psutil
 ```
 
 ## Installation (Linux)
@@ -72,9 +72,10 @@ pip install psutil
 Use `tail -f logs/[specific log].log` to monitor progress. `ls logs` to see options. Note, when asked to press enter, sometimes you need to do this a few times.
 
 **Run Python file**
-```bash
-python run.py
-```
+
+* On Linux: `python run.py`
+* On Mac: `pyenv exec python run.py`
+
 The program will install various dependencies, as required. Follow any instructions and approve all asks.
 
 **Modal login**
