@@ -6,6 +6,7 @@ import pytest
 from blockassist.data import (
     backup_evaluate_dirs,
     get_all_evaluate_dirs,
+    get_total_episodes,
 )
 
 
@@ -139,3 +140,87 @@ class TestBackupExistingEvaluateDirs:
             # evaluate directory should not be created if no evaluate dirs exist
             evaluate_dir = checkpoint_dir / "evaluate"
             assert not evaluate_dir.exists()
+
+
+class TestGetTotalEpisodes:
+    def test_get_total_episodes_empty_directory(self):
+        """Test that get_total_episodes returns 0 for directory with no evaluate_ dirs."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            data_dir = Path(temp_dir)
+            checkpoint_dir = data_dir / "base_checkpoint"
+            checkpoint_dir.mkdir()
+
+            result = get_total_episodes(str(checkpoint_dir))
+            assert result == 0
+
+    def test_get_total_episodes_with_valid_sessions(self):
+        """Test get_total_episodes with valid session directories."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            data_dir = Path(temp_dir)
+            checkpoint_dir = data_dir / "base_checkpoint"
+            checkpoint_dir.mkdir()
+
+            # Create evaluate directories
+            eval_dir1 = checkpoint_dir / "evaluate_20250101_120000"
+            eval_dir2 = checkpoint_dir / "evaluate_20250102_130000"
+            eval_dir1.mkdir()
+            eval_dir2.mkdir()
+
+            # Create valid session directories in first evaluate dir
+            session1 = eval_dir1 / "1"
+            session2 = eval_dir1 / "2"
+            session1.mkdir()
+            session2.mkdir()
+
+            # Add required files to make sessions valid
+            required_files = ['config.json', 'episodes.zip', 'metrics.json', 'run.json']
+            for file in required_files:
+                (session1 / file).touch()
+                (session2 / file).touch()
+
+            # Create valid session in second evaluate dir
+            session3 = eval_dir2 / "1"
+            session3.mkdir()
+            for file in required_files:
+                (session3 / file).touch()
+
+            result = get_total_episodes(str(checkpoint_dir))
+            assert result == 3
+
+    def test_get_total_episodes_nonexistent_directory(self):
+        """Test that get_total_episodes raises FileNotFoundError for nonexistent directory."""
+        nonexistent_path = "/nonexistent/path"
+
+        with pytest.raises(
+            FileNotFoundError, match="Checkpoint directory does not exist"
+        ):
+            get_total_episodes(nonexistent_path)
+
+    def test_get_total_episodes_mixed_evaluate_dirs(self):
+        """Test get_total_episodes with mix of valid and invalid evaluate directories."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            data_dir = Path(temp_dir)
+            checkpoint_dir = data_dir / "base_checkpoint"
+            checkpoint_dir.mkdir()
+
+            # Create evaluate directory with valid sessions
+            eval_dir1 = checkpoint_dir / "evaluate_20250101_120000"
+            eval_dir1.mkdir()
+
+            session1 = eval_dir1 / "1"
+            session1.mkdir()
+            required_files = ['config.json', 'episodes.zip', 'metrics.json', 'run.json']
+            for file in required_files:
+                (session1 / file).touch()
+
+            # Create evaluate directory with no valid sessions
+            eval_dir2 = checkpoint_dir / "evaluate_20250102_130000"
+            eval_dir2.mkdir()
+            (eval_dir2 / "some_file.txt").touch()
+
+            # Create non-evaluate directory (should be ignored)
+            non_eval_dir = checkpoint_dir / "other_directory"
+            non_eval_dir.mkdir()
+
+            result = get_total_episodes(str(checkpoint_dir))
+            assert result == 1

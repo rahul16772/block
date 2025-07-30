@@ -151,12 +151,18 @@ def get_total_episodes(checkpoint_dir: str) -> int:
     episode_counts = []
     evaluate_dirs = get_all_evaluate_dirs(checkpoint_path)
     for evaluate_dir in evaluate_dirs:
-        # Count numbered directories inside this evaluate directory
+        # Count valid episode directories as sessions.
         session_count = 0
         try:
             for item in evaluate_dir.iterdir():
-                if item.is_dir() and item.name.isdigit():
+                if not (item.is_dir() and item.name.isdigit()):
+                    # Not a valid run directory.
+                    continue
+
+                required_files = ['config.json', 'episodes.zip', 'metrics.json', 'run.json']
+                if all((item / file).exists() for file in required_files):
                     session_count += 1
+
         except (OSError, PermissionError) as e:
             _LOG.warning(f"Could not access evaluate directory {evaluate_dir}: {e}")
 

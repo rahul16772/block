@@ -285,7 +285,7 @@ By Gensyn
     #TODO: Avoid duplicating the blockassist.globals._MAX_EPISODE_COUNT value
     # And find a more elegant way to pull it from the environment.
     _MAX_EPISODE_COUNT = 2
-    
+
     for i in range(_MAX_EPISODE_COUNT):
         # Start timer in a separate thread
         timer_running = True
@@ -308,11 +308,11 @@ By Gensyn
             timer_running = False
 
 
-        print(f"[{i}] Press ENTER when you have finished recording your episode. **You may have to press it multiple times**")
+        print(f"\n[{i}] Press ENTER when you have finished recording your episode. **You may have to press it multiple times**")
         wait_for_enter(timer_end)
-        print(f"[{i}] Enter received")
+        print(f"\n[{i}] Enter received")
 
-        print(f"[{i}] Stopping episode recording")
+        print(f"\n[{i}] Stopping episode recording")
         send_blockassist_sigint(proc_blockassist.pid)
 
     print("Stopping Malmo")
