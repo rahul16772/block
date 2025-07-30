@@ -31,7 +31,7 @@ pyenv install 3.10
 
 **Install psutil and readchar**
 ```bash
-pyenv exec pip install psutil
+pyenv exec pip install psutil readchar
 ```
 
 ## Installation (Linux)
