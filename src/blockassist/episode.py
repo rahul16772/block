@@ -1,4 +1,5 @@
 import asyncio
+from pathlib import Path
 import time
 
 from mbag.environment.goals import ALL_GOAL_GENERATORS
@@ -6,7 +7,7 @@ from mbag.scripts.evaluate import ex
 from sacred.observers import FileStorageObserver
 
 from blockassist import telemetry
-from blockassist.globals import _DEFAULT_CHECKPOINT, get_identifier, get_logger
+from blockassist.globals import _DEFAULT_CHECKPOINT, _MAX_EPISODE_COUNT, get_identifier, get_logger
 from blockassist.goals.generator import BlockAssistGoalGenerator
 
 _LOG = get_logger()
@@ -38,12 +39,14 @@ def blockassist():
     }
 
 
-def run_main():
+def run_main(evaluate_dirs):
     ALL_GOAL_GENERATORS["blockassist"] = BlockAssistGoalGenerator
-    result = ex.run(
+    run = ex.run(
         named_configs=["human_with_assistant", "blockassist"],
         config_updates={"assistant_checkpoint": _DEFAULT_CHECKPOINT},
-    ).result
+    )
+    evaluate_dirs.append(Path(run.observers[-1].dir))
+    result = run.result
     assert result
     return result
 
@@ -55,7 +58,7 @@ class EpisodeRunner:
         self,
         address_eoa: str,
         checkpoint_dir: str,
-        episode_count: int = 1,
+        max_episode_count: int = _MAX_EPISODE_COUNT,
         human_alone: bool = True,
     ):
         self.address_eoa = address_eoa
@@ -64,7 +67,8 @@ class EpisodeRunner:
         self.checkpoint_dir = checkpoint_dir
 
         self.completed_episode_count = 0
-        self.episode_count = episode_count
+        self.max_episode_count = max_episode_count
+        self.evaluate_dirs = []
 
         self.start_time = time.time()
         self.end_time = None
@@ -109,12 +113,13 @@ class EpisodeRunner:
 
     def start(self):
         self.before_session()
-        for _ in range(self.episode_count):
+        for i in range(self.max_episode_count):
             try:
-                _LOG.info(f"Episode {self.episode_count} recording started.")
-                result = run_main()
+                _LOG.info(f"Episode {i} recording started.")
+                result = run_main(self.evaluate_dirs)
                 self.after_episode(result)
             except KeyboardInterrupt:
-                _LOG.info(f"Episode {self.episode_count} recording stopped!")
+                _LOG.info(f"Episode {i} recording stopped!")
+            # except
 
         self.after_session()

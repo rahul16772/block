@@ -76,27 +76,27 @@ def restore_evaluate_dirs_from_backup(checkpoint_dir: str) -> None:
 
 
 def zip_and_upload_episodes(
-    identifier: str, checkpoint_dir: str, bucket_name: str
+    identifier: str,
+    checkpoint_dir: str,
+    bucket_name: str,
+    evaluate_dirs: list[Path]
 ) -> list[str]:
     """
-    Zip all episode directories and upload them to S3.
+    Zip specific episode directories and upload them to S3.
 
     Args:
         identifier: Unique identifier for this user
         checkpoint_dir: Checkpoint directory containing evaluate_ directories
         bucket_name: S3 bucket name for upload
+        evaluate_dirs: List of specific evaluate directory paths to process
 
     Returns:
         List of uploaded zip file S3 URIs
     """
     checkpoint_path = check_checkpoint_dir(checkpoint_dir)
 
-    # Get all evaluate directories
-    evaluate_dirs = get_all_evaluate_dirs(checkpoint_path)
     if not evaluate_dirs:
-        raise ValueError(
-            f"No timestamped evaluation directories found in {checkpoint_path}"
-        )
+        raise ValueError("No evaluation directories provided")
 
     s3_uris = []
     for evaluate_dir in evaluate_dirs:
@@ -128,6 +128,21 @@ def zip_and_upload_episodes(
         s3_uris.append(s3_uri)
 
     return s3_uris
+
+
+def zip_and_upload_all_episodes(
+    identifier: str, checkpoint_dir: str, bucket_name: str
+) -> list[str]:
+    checkpoint_path = check_checkpoint_dir(checkpoint_dir)
+
+    # Get all evaluate directories
+    evaluate_dirs = get_all_evaluate_dirs(checkpoint_path)
+    if not evaluate_dirs:
+        raise ValueError(
+            f"No timestamped evaluation directories found in {checkpoint_path}"
+        )
+
+    return zip_and_upload_episodes(identifier, checkpoint_dir, bucket_name, evaluate_dirs)
 
 
 def get_total_episodes(checkpoint_dir: str) -> int:

@@ -12,6 +12,7 @@ from typing import Optional, Dict
 
 import psutil
 
+
 from daemon import PROCESSES, cleanup_processes, start_log_watcher
 
 def create_logs_dir(clear_existing=True):
@@ -277,35 +278,42 @@ By Gensyn
     print("Select an axe to break things, or various blocks, by pressing the number keys 1-9")
     print("Use the WASD keys to move around")
     print("Once you've finished playing, press ESC, then click back on the terminal window")
-    print("------")
-    print("\nPress ENTER when you have finished recording your episode.")
+    print("------\n")
 
     proc_blockassist = run_blockassist(env=env)
 
-    # Start timer in a separate thread with rich display
-    timer_running = True
-    start_time = time.time()
-    def timer_display():
-        while timer_running:
-            elapsed = int(time.time() - start_time)
-            hours = elapsed // 3600
-            minutes = (elapsed % 3600) // 60
-            seconds = elapsed % 60
-            print(f"\r⏱️  Recording time: {hours:02d}:{minutes:02d}:{seconds:02d}", end="", flush=True)
-            time.sleep(1)
+    #TODO: Avoid duplicating the blockassist.globals._MAX_EPISODE_COUNT value
+    # And find a more elegant way to pull it from the environment.
+    _MAX_EPISODE_COUNT = 2
+    
+    for i in range(_MAX_EPISODE_COUNT):
+        # Start timer in a separate thread
+        timer_running = True
+        start_time = time.time()
+
+        def timer_display():
+            while timer_running:
+                elapsed = int(time.time() - start_time)
+                hours = elapsed // 3600
+                minutes = (elapsed % 3600) // 60
+                seconds = elapsed % 60
+                print(f"\r⏱️  Recording time: {hours:02d}:{minutes:02d}:{seconds:02d}", end="", flush=True)
+                time.sleep(1)
+
+        timer_thread = threading.Thread(target=timer_display, daemon=True)
+        timer_thread.start()
+
+        def timer_end(key):
+            nonlocal timer_running
+            timer_running = False
 
 
-    def timer_end(key):
-        nonlocal timer_running
-        timer_running = False
+        print(f"[{i}] Press ENTER when you have finished recording your episode. **You may have to press it multiple times**")
+        wait_for_enter(timer_end)
+        print(f"[{i}] Enter received")
 
-    timer_thread = threading.Thread(target=timer_display, daemon=True)
-    timer_thread.start()
-
-    wait_for_enter(timer_end)
-
-    print("\nStopping episode recording")
-    send_blockassist_sigint(proc_blockassist.pid)
+        print(f"[{i}] Stopping episode recording")
+        send_blockassist_sigint(proc_blockassist.pid)
 
     print("Stopping Malmo")
     proc_malmo.kill()

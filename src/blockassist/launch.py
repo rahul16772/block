@@ -22,6 +22,7 @@ from blockassist.data import (
     delete_evaluate_zips,
     get_total_episodes,
     restore_evaluate_dirs_from_backup,
+    zip_and_upload_all_episodes,
     zip_and_upload_episodes,
 )
 from blockassist.distributed.hf import upload_to_huggingface
@@ -103,8 +104,8 @@ async def _main(cfg: DictConfig):
         num_instances = cfg.get("num_instances", 2)
         checkpoint_dir = cfg.get("checkpoint_dir", _DEFAULT_CHECKPOINT)
         model_dir = cfg.get("model_dir", "")
-        episode_count = cfg.get("episode_count", 1)
         num_training_iters = cfg.get("num_training_iters", 0)
+        upload_session_episodes_only = cfg.get("upload_session_episodes_only", True)
 
         stages = get_stages(cfg)
         for stage in stages:
@@ -126,19 +127,27 @@ async def _main(cfg: DictConfig):
                 episode_runner = EpisodeRunner(
                     address_eoa,
                     checkpoint_dir,
-                    episode_count,
                     human_alone=num_instances == 1,
                 )
                 episode_runner.start()
                 await episode_runner.wait_for_end()
 
             elif stage == Stage.UPLOAD_EPISODES:
-                _LOG.info("Uploading episode zips!")
-                s3_uris = zip_and_upload_episodes(
-                    address_eoa,
-                    checkpoint_dir,
-                    _DEFAULT_EPISODES_S3_BUCKET,
-                )
+                if upload_session_episodes_only:
+                    _LOG.info("Uploading session episode zips!")
+                    s3_uris = zip_and_upload_episodes(
+                        get_identifier(address_eoa),
+                        checkpoint_dir,
+                        _DEFAULT_EPISODES_S3_BUCKET,
+                        episode_runner.evaluate_dirs,
+                    )
+                else:
+                    _LOG.info("Uploading all episode zips!")
+                    s3_uris = zip_and_upload_all_episodes(
+                        get_identifier(address_eoa),
+                        checkpoint_dir,
+                        _DEFAULT_EPISODES_S3_BUCKET,
+                    )
                 _LOG.info(
                     f"Episode data uploaded successfully! Uploaded {len(s3_uris)} files."
                 )

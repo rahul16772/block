@@ -8,6 +8,7 @@ _DATA_DIR = "data"
 _DEFAULT_CHECKPOINT = f"{_DATA_DIR}/base_checkpoint"
 _DEFAULT_EPISODES_S3_BUCKET = "blockassist-episode"
 
+_MAX_EPISODE_COUNT = 2
 _LOG = None
 
 
