@@ -103,5 +103,6 @@ echo "Found userData.json. Proceeding..."
 
 export BA_ORG_ID=$(awk 'BEGIN { FS = "\"" } !/^[ \t]*[{}]/ { print $(NF - 1); exit }' modal-login/temp-data/userData.json)
 export BA_ADDRESS_EOA=$(awk -F'"' '/"address"/ { print $4; exit }' modal-login/temp-data/userData.json)
+export BA_ADDRESS_ACCOUNT=$(awk -F'"' '/"accountAddress"/ { print $4; exit }' modal-login/temp-data/userApiKey.json)
 
 # TODO: Kill the sever running at port 3000 once the job finishes

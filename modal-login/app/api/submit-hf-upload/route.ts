@@ -66,7 +66,7 @@ export async function POST(request: Request) {
         });
 
         console.log("Function args:", {
-            address: user.address,
+            accountAddress,
             trainingId: body.trainingId,
             huggingFaceId: body.huggingFaceId,
             numSessions: body.numSessions,
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
             deferredActionDigest,
             initCode,
             functionName: "submitHFUpload",
-            args: [user.address, body.trainingId, body.huggingFaceId, body.numSessions, body.telemetryEnabled],
+            args: [accountAddress, body.trainingId, body.huggingFaceId, body.numSessions, body.telemetryEnabled],
         });
 
         return userOperationResponse;

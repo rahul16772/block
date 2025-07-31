@@ -172,7 +172,7 @@ async def _main(cfg: DictConfig):
                         repo_id=hf_repo_id,
                         hf_token=hf_token,
                         chain_metadata_dict={
-                            "eoa": address_eoa,
+                            "eoa": cfg.get("address_account"),
                             "trainingId": training_id,
                             "numSessions": num_sessions,
                             "telemetryEnabled": is_telemetry_enabled,

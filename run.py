@@ -169,6 +169,7 @@ def wait_for_login():
     # Extract environment variables from userData.json
     print("Waiting for modal userData.json to be created...")
     user_data_path = "modal-login/temp-data/userData.json"
+    user_api_key_path = "modal-login/temp-data/userApiKey.json"
     while not os.path.exists(user_data_path):
         time.sleep(1)
     print("Found userData.json. Proceeding...")
@@ -177,14 +178,21 @@ def wait_for_login():
     with open(user_data_path, "r") as f:
         user_data = json.load(f)
 
-    for k in user_data.keys():
-        d = os.environ.copy()
+    with open(user_api_key_path, "r") as f:
+        user_api_key = json.load(f)
 
+    d = os.environ.copy()
+
+    for k in user_data.keys():
         d["BA_ORG_ID"] = user_data[k].get("orgId", "")
         d["BA_ADDRESS_EOA"] = user_data[k].get("address", "")
         d["PYTHONWARNINGS"] = "ignore::DeprecationWarning"
 
+    for k in user_api_key.keys():
+        # Get the latest key
+        d["BA_ADDRESS_ACCOUNT"] = user_api_key[k][-1].get("accountAddress", "")
         return d
+
 
     raise ValueError("No user data found in userData.json")
 
