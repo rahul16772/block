@@ -16,6 +16,10 @@ import psutil
 from daemon import PROCESSES, cleanup_processes, start_log_watcher
 
 
+TOTAL_TIME_PLAYED = 0
+EPISODES_PLAYED = 0
+
+
 def create_logs_dir(clear_existing=True):
     if os.path.exists("logs") and clear_existing:
         print("Clearing existing logs directory")
@@ -189,6 +193,8 @@ def wait_for_login():
 
 
 def run():
+    global TOTAL_TIME_PLAYED
+    global EPISODES_PLAYED
     print("Creating directories...")
     create_logs_dir(clear_existing=True)
     create_evaluate_dir()
@@ -341,6 +347,8 @@ By Gensyn
 
         print(f"\n[{i}] Stopping episode recording")
         send_blockassist_sigint(proc_blockassist.pid)
+        TOTAL_TIME_PLAYED += int(time.time() - start_time)
+        EPISODES_PLAYED += 1
 
     print("Stopping Malmo")
     proc_malmo.kill()
@@ -368,6 +376,8 @@ By Gensyn
     train_log_path = "logs/blockassist-train.log"
     upload_confirmed = False
     transaction_hash = None
+    hf_path = None
+    hf_size = None
 
     # Wait up to 30 seconds for the logs to appear
     for attempt in range(30):
@@ -386,6 +396,11 @@ By Gensyn
                         "Successfully uploaded model to HuggingFace:" in line
                         and not upload_confirmed
                     ):
+                        line_elems = line.split(
+                            "Successfully uploaded model to HuggingFace: "
+                        )[1].split(" ")
+                        hf_path = line_elems[0].strip()
+                        hf_size = line_elems[3].strip() + " " + line_elems[4].strip()
                         print("✅ " + line)
                         upload_confirmed = True
                     elif "HF Upload API response:" in line and not transaction_hash:
@@ -417,6 +432,35 @@ By Gensyn
     print("========")
     print("Stopping Yarn")
     proc_yarn.kill()
+
+    print(f"🎉 SUCCESS! Your BlockAssist session has completed successfully!")
+    print(f"")
+    print(f"- Your gameplay was recorded and analyzed")
+    print(f"- An AI model was trained on your building patterns")
+    print(f"- The model was successfully uploaded to Hugging Face")
+    print(f"- Your work helps train better AI assistants ")
+    print(f"")
+    print(f"Stats:")
+    print(f"")
+    print(f"- Episodes recorded: {EPISODES_PLAYED}")
+    print(
+        f"- Total gameplay time: {TOTAL_TIME_PLAYED // 60}m {TOTAL_TIME_PLAYED % 60}s"
+    )
+    print(f"- Model trained and uploaded: {hf_path}")
+    print(f"- Model size: {hf_size}")
+    print(f"")
+    print(f"🚀What to do next:")
+    print(f"")
+    print(f"")
+    print(
+        f"- Run BlockAssist again to improve your performance (higher completion %, faster time)."
+    )
+    print(f"- Check your model on Hugging Face: https://huggingface.co/{hf_path}")
+    print(
+        f"- Screenshot your stats, record your gameplay, and share with the community on X or Discord (link)"
+    )
+    print(f"")
+    print(f"Thank you for contributing to BlockAssist!")
 
 
 if __name__ == "__main__":
