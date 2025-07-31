@@ -1,13 +1,18 @@
 import asyncio
-from pathlib import Path
 import time
+from pathlib import Path
 
 from mbag.environment.goals import ALL_GOAL_GENERATORS
 from mbag.scripts.evaluate import ex
 from sacred.observers import FileStorageObserver
 
 from blockassist import telemetry
-from blockassist.globals import _DEFAULT_CHECKPOINT, _MAX_EPISODE_COUNT, get_identifier, get_logger
+from blockassist.globals import (
+    _DEFAULT_CHECKPOINT,
+    _MAX_EPISODE_COUNT,
+    get_identifier,
+    get_logger,
+)
 from blockassist.goals.generator import BlockAssistGoalGenerator
 
 _LOG = get_logger()

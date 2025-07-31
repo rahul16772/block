@@ -1,10 +1,9 @@
-from pathlib import Path
 import shutil
 import zipfile
+from pathlib import Path
 
-from blockassist.globals import get_logger
 from blockassist.distributed.s3 import upload_zip_to_s3
-
+from blockassist.globals import get_logger
 
 _LOG = get_logger()
 

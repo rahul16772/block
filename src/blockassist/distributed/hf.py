@@ -1,12 +1,11 @@
+import io
+import json
 from pathlib import Path
 
 from huggingface_hub import HfApi
 
-from blockassist.globals import get_logger, get_identifier
 from blockassist import telemetry
-import io
-import json
-
+from blockassist.globals import get_identifier, get_logger
 
 _LOG = get_logger()
 

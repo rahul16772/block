@@ -1,8 +1,8 @@
 import asyncio
 import os
-from pathlib import Path
 import shutil
 import time
+from pathlib import Path
 
 from mbag.environment.goals import ALL_GOAL_GENERATORS
 from mbag.scripts.convert_human_data_to_rllib import ex as convert_ex

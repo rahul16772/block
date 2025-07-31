@@ -1,17 +1,18 @@
+import datetime
 import json
 import os
-import datetime
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
+
 import pytest
 import requests
 
 from blockassist.telemetry import (
-    get_ip,
+    BLOCKASSIST_VERSION,
+    TELEMETRY_API_EVENT_SESSION,
     get_accelerator_info,
+    get_ip,
     push_telemetry_event_session,
     push_telemetry_event_trained,
-    TELEMETRY_API_EVENT_SESSION,
-    BLOCKASSIST_VERSION,
 )
 
 

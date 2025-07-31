@@ -1,4 +1,5 @@
 import logging
+
 import requests
 
 MODAL_PROXY_URL = "http://localhost:3000/api/"

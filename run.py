@@ -1,20 +1,17 @@
 import json
 import logging
 import os
-import time
 import signal
 import sys
 import threading
-import readchar
-
+import time
 from subprocess import Popen
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 import psutil
-
+import readchar
 
 from daemon import PROCESSES, cleanup_processes, start_log_watcher
-
 
 TOTAL_TIME_PLAYED = 0
 EPISODES_PLAYED = 0

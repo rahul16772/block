@@ -1,13 +1,11 @@
+import datetime
 import json
 import os
 import platform
-import datetime
-
 from importlib.metadata import version
 
-import torch
 import requests
-
+import torch
 from pydantic import BaseModel
 
 TELEMETRY_API_BASE = "https://telemetry-api.internal-apps-central1.clusters.gensyn.ai"
