@@ -55,10 +55,31 @@ def cleanup_processes(processes=PROCESSES):
     print("Cleaning up processes...")
     kill_gradle_processes()
     kill_dev_servers()
+    
+    # Kill any blockassist processes (including training)
+    cmd_blockassist = "pkill -f -i blockassist"
+    process_blockassist = Popen(cmd_blockassist, shell=True)
+    process_blockassist.wait()
+    
+    # Force kill any remaining blockassist processes
+    cmd_blockassist_force = "pkill -9 -f -i blockassist"
+    process_blockassist_force = Popen(cmd_blockassist_force, shell=True)
+    process_blockassist_force.wait()
+    
+    # Kill processes from the PROCESSES list
     for proc in processes:
         if proc.poll() is None:  # Process is still running
-            proc.kill()
-            proc.wait()
+            try:
+                # Try graceful termination first
+                proc.terminate()
+                proc.wait(timeout=3)
+            except:
+                # Force kill if graceful termination fails
+                try:
+                    proc.kill()
+                    proc.wait()
+                except:
+                    pass
 
 
 class LogWatcherDaemon:
