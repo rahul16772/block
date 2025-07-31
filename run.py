@@ -311,7 +311,7 @@ By Gensyn
 
     # TODO: Avoid duplicating the blockassist.globals._MAX_EPISODE_COUNT value
     # And find a more elegant way to pull it from the environment.
-    _MAX_EPISODE_COUNT = 2
+    _MAX_EPISODE_COUNT = 1
 
     for i in range(_MAX_EPISODE_COUNT):
         # Start timer in a separate thread
