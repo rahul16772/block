@@ -85,8 +85,8 @@ Use `tail -f logs/[specific log].log` to monitor progress. `ls logs` to see opti
 
 **Run with Python**
 
-* On Linux: `python run.py`
 * On Mac: `pyenv exec python run.py`
+* On Linux: `python run.py`
 
 The program will install various dependencies as required. Follow any instructions and approve all asks.
 
