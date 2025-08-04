@@ -90,9 +90,13 @@ Use `tail -f logs/[specific log].log` to monitor progress. `ls logs` to see opti
 
 The program will install various dependencies as required. Follow any instructions and approve all asks.
 
+**Huggingface Token**
+
+You will be asked ot enter a [Huggingface](https://huggingface.co) API token. Follow the instructions [here](https://huggingface.co/docs/hub/en/security-tokens) to generate one. It will need Write access.
+
 **Modal login**
 
-You will be prompted to log in via the modal. If you have previously logged in, it will skip this step. Else, log in and press ENTER when done.
+You will be prompted to log in via the modal. If you have previously logged in, it will skip this step. Otherwise, log in using the window that just opened.
 
 **Play Minecraft**
 
