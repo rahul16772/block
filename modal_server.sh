@@ -7,7 +7,7 @@ ROOT="$PWD"
 DOCKER=${DOCKER:-""}
 
 # This is an address good enough for testing.
-export SMART_CONTRACT_ADDRESS="0xa6834217923D7A2A0539575CFc67abA209E6436F"
+export SMART_CONTRACT_ADDRESS="0xE2070109A0C1e8561274E59F024301a19581d45c"
 
 # Function to setup Node.js and NVM
 setup_node_nvm() {
