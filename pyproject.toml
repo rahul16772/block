@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[project]
+name = "blockassist"
+description = "Distributed experiments built using the MBAG multiagent environment (https://github.com/cassidylaidlaw/minecraft-building-assistance-game)."
+readme = "README.md"
+requires-python = ">=3.10,<4.0"
+version = "0.0.1"
+dependencies = [
+  "aiofiles",
+  "boto3",
+  "datasets",
+  "eth-account",
+  "hydra-core",
+  "mbag-gensyn[rllib,malmo]",
+  "numpy>=1.21,<1.22",
+  "readchar",
+  "requests",
+  "six",
+  "pydantic",
+  "web3",
+  "python-dotenv (>=1.1.1,<2.0.0)",
+  "psutil (>=7.0.0,<8.0.0)",
+]
+
+[project.optional-dependencies]
+dev = ["ruff", "isort", "pytest", "pytest-asyncio"]

@@ -1,0 +1,7 @@
+mode: e2e
+hf_token: ${oc.env:HF_TOKEN} # Set this to your HuggingFace token for uploads
+episode_count: 1
+num_training_iters: 1
+org_id: ${oc.env:BA_ORG_ID}
+address_eoa: ${oc.env:BA_ADDRESS_EOA}
+address_account: ${oc.env:BA_ADDRESS_ACCOUNT}
