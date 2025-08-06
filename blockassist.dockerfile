@@ -31,6 +31,8 @@ RUN python3 -m pip install -e .
 ENV TMPDIR=/tmp/
 EXPOSE 5901 6901
 
+RUN mkdir -p ~/.gradle
+
 RUN touch ~/.gradle/gradle.properties && echo "org.gradle.daemon=true" >> ~/.gradle/gradle.properties
 
 CMD ["python", "-m", "malmo.minecraft", "launch", "--num_instances", "2", "--goal_visibility", "True", "False"]
