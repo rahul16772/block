@@ -195,7 +195,7 @@ def wait_for_login():
                 d["BA_ADDRESS_ACCOUNT"] = user_api_key[k][-1]["accountAddress"]
                 return d
         except Exception as e:
-            print(f"Error reading userData.json: {e}")
+            print("Waiting...")
             time.sleep(1)   
 
 
