@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![gen-blockassit-gh-header](https://github.com/user-attachments/assets/478e10d0-55e9-42f5-8e3e-dfb158df1c3d)
+![gen-blockassit-gh-header](splash.png)
 
 </div>
 
@@ -12,6 +12,8 @@ Steps:
 1. Follow setup instructions below
 2. Play Minecraft episodes and complete the building goal in the shortest time possible.  This will help train the best assistant models.
 3. Share your progress with the community by posting your gameplay videos, stats, and Hugging Face uploads on Discord and X. Track your participation on the leaderboard.
+
+**You do not need a copy of Minecraft to play! BlockAssist includes a free version.**
 
 ## Installation (macOS)
 
