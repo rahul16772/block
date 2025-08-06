@@ -175,26 +175,29 @@ def wait_for_login():
     print("Found userData.json. Proceeding...")
 
     # Read and parse the JSON file
-    with open(user_data_path, "r") as f:
-        user_data = json.load(f)
+    while True:
+        try:
+            with open(user_data_path, "r") as f:
+                user_data = json.load(f)
 
-    with open(user_api_key_path, "r") as f:
-        user_api_key = json.load(f)
+            with open(user_api_key_path, "r") as f:
+                user_api_key = json.load(f)
 
-    d = os.environ.copy()
+            d = os.environ.copy()
 
-    for k in user_data.keys():
-        d["BA_ORG_ID"] = user_data[k].get("orgId", "")
-        d["BA_ADDRESS_EOA"] = user_data[k].get("address", "")
-        d["PYTHONWARNINGS"] = "ignore::DeprecationWarning"
+            for k in user_data.keys():
+                d["BA_ORG_ID"] = user_data[k]['orgId']
+                d["BA_ADDRESS_EOA"] = user_data[k]['address']
+                d["PYTHONWARNINGS"] = "ignore::DeprecationWarning"
 
-    for k in user_api_key.keys():
-        # Get the latest key
-        d["BA_ADDRESS_ACCOUNT"] = user_api_key[k][-1].get("accountAddress", "")
-        return d
+            for k in user_api_key.keys():
+                # Get the latest key
+                d["BA_ADDRESS_ACCOUNT"] = user_api_key[k][-1]["accountAddress"]
+                return d
+        except Exception as e:
+            print(f"Error reading userData.json: {e}")
+            time.sleep(1)   
 
-
-    raise ValueError("No user data found in userData.json")
 
 
 def run():
@@ -274,7 +277,7 @@ By Gensyn
     time.sleep(5)
     if not os.path.exists("modal-login/temp-data/userData.json"):
         print(
-            "Running Gensyn login. If browser does not open automatically, please open a browser and go to http://localhost:3000 and click 'login' to continue."
+            "Running Gensyn Testnet login. If browser does not open automatically, please open a browser and go to http://localhost:3000 and click 'login' to continue."
         )
         print("Note, if it's your first time playing, also click 'log in')")
         run_open()
@@ -462,7 +465,7 @@ By Gensyn
     )
     print(f"- Check your model on Hugging Face: https://huggingface.co/{hf_path}")
     print(
-        f"- Screenshot your stats, record your gameplay, and share with the community on X or Discord (link)"
+        f"- Screenshot your stats, record your gameplay, and share with the community on X (https://x.com/gensynai) or Discord (https://discord.gg/gensyn)"
     )
     print(f"")
     print(f"Thank you for contributing to BlockAssist!")

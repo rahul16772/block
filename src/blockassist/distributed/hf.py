@@ -54,7 +54,7 @@ def upload_to_huggingface(
     try:
         _create_readme(model_path, user_id=user_id)
         api = HfApi(token=hf_token)
-        api.create_repo(repo_id=repo_id, repo_type="model", exist_ok=True, private=True)
+        api.create_repo(repo_id=repo_id, repo_type="model", exist_ok=True)
         api.upload_folder(repo_id=repo_id, repo_type="model", folder_path=model_path)
 
         if chain_metadata_dict:
