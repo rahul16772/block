@@ -181,4 +181,4 @@ This repository uploads telemetry to Gensyn services. To disable telemetry, expo
 export DISABLE_TELEMETRY=1
 ```
 
-**Note**: If your turn off telemetry, your contributions may not be counted towards the [BlockAssist leaderboard](https://dashboard.gensyn.ai).
+**Note**: If you turn off telemetry, your contributions may not be counted towards the [BlockAssist leaderboard](https://dashboard.gensyn.ai).
