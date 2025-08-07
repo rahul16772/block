@@ -50,11 +50,27 @@ def kill_dev_servers():
     process_yarn_force.wait()
 
 
+def kill_http_server_processes():
+    """Kill HTTP server processes (run_http_server.py and related processes)"""
+    logging.info("Running kill_http_server_processes")
+    
+    # Kill run_http_server.py processes
+    cmd_http_server = "pkill -f 'run_http_server.py'"
+    process_http_server = Popen(cmd_http_server, shell=True)
+    process_http_server.wait()
+    
+    # Force kill any remaining HTTP server processes
+    cmd_http_server_force = "pkill -9 -f 'run_http_server.py'"
+    process_http_server_force = Popen(cmd_http_server_force, shell=True)
+    process_http_server_force.wait()
+
+
 def cleanup_processes(processes=PROCESSES):
     logging.info("Running cleanup_processes")
     print("Cleaning up processes...")
     kill_gradle_processes()
     kill_dev_servers()
+    kill_http_server_processes()
     
     # Kill any blockassist processes (including training)
     cmd_blockassist = "pkill -f -i blockassist"

@@ -91,6 +91,37 @@ def run_yarn():
     return process
 
 
+def run_http_server():
+    """Start the HTTP server in a separate Python process for better WSL compatibility."""
+    logging.info("Starting HTTP server in separate process")
+    cmd = [sys.executable, "run_http_server.py"]
+    process = Popen(cmd)
+    PROCESSES.append(process)
+    return process
+
+
+def wait_for_http_server_ready(timeout: int = 60):
+    """Wait for the HTTP server to be ready by checking if port 3000 is listening."""
+    import socket
+    import time
+    
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(1)
+                result = s.connect_ex(('localhost', 3000))
+                if result == 0:
+                    logging.info("HTTP server is ready on port 3000")
+                    return True
+        except Exception:
+            pass
+        time.sleep(2)
+    
+    logging.warning("HTTP server readiness timeout")
+    return False
+
+
 def run_open():
     logging.info("Running run_open")
     cmd = "open http://localhost:3000 2> /dev/null"
@@ -273,8 +304,19 @@ By Gensyn
         print(
             "You will likely be asked to approve accessibility permissions. Please do so and, if necessary, restart the program."
         )
-    proc_yarn = run_yarn()
-    time.sleep(5)
+    
+    # Start HTTP server in separate process for better WSL compatibility
+    print("Starting HTTP server in separate process...")
+    proc_http_server = run_http_server()
+    
+    # Wait for HTTP server to be ready
+    print("Waiting for HTTP server to be ready...")
+    if wait_for_http_server_ready():
+        print("✅ HTTP server is ready!")
+    else:
+        print("⚠️ HTTP server may not be fully ready, but continuing...")
+    
+    time.sleep(2)
     if not os.path.exists("modal-login/temp-data/userData.json"):
         print(
             "Running Gensyn Testnet login. If browser does not open automatically, please open a browser and go to http://localhost:3000 and click 'login' to continue."
@@ -291,6 +333,9 @@ By Gensyn
     )
     print(
         "NOTE: If one or both of the windows closes, please restart the program. You can also `tail -f logs/malmo.log` in another terminal if you suspect an error"
+    )
+    print(
+        "🎮 Graphics Mode: Running with dual instances (improved WSL2 graphics support)"
     )
     wait_for_enter()
     print("Enter received")
@@ -438,8 +483,13 @@ By Gensyn
 
     print("\nSHUTTING DOWN")
     print("========")
-    print("Stopping Yarn")
-    proc_yarn.kill()
+    print("Stopping HTTP server")
+    if 'proc_http_server' in locals():
+        proc_http_server.terminate()
+        try:
+            proc_http_server.wait(timeout=5)
+        except:
+            proc_http_server.kill()
 
     print(f"🎉 SUCCESS! Your BlockAssist session has completed successfully!")
     print(f"")
