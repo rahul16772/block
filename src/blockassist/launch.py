@@ -58,6 +58,7 @@ _ALL_STAGES = [
     Stage.UPLOAD_MODEL,
 ]
 
+
 def get_stages(cfg: DictConfig) -> list[Stage]:
     # Overrides mode
     if "stages" in cfg and cfg["stages"]:
@@ -78,12 +79,14 @@ def hf_login(cfg: DictConfig):
 
 def get_hf_repo_id(hf_token: str, training_id: str):
     username = whoami(token=hf_token)["name"]
-    return f"{username}/blockassist-bc-{training_id}"
+    return f"{username}/blockassist"
 
 
 async def _main(cfg: DictConfig):
     try:
-        logging.basicConfig(filename='logs/blockassist.log', encoding='utf-8', level=logging.DEBUG)
+        logging.basicConfig(
+            filename="logs/blockassist.log", encoding="utf-8", level=logging.DEBUG
+        )
         if cfg["mode"] == "e2e":
             _LOG.info("Starting full recording session!!")
 
