@@ -169,7 +169,7 @@ async def _main(cfg: DictConfig):
                     hf_repo_id = get_hf_repo_id(hf_token, training_id)
                     num_sessions = get_total_episodes(checkpoint_dir)
                     is_telemetry_enabled = not telemetry.is_telemetry_disabled()
-                    upload_to_huggingface(
+                    git_ref = upload_to_huggingface(
                         model_path=Path(model_dir),
                         user_id=get_identifier(address_eoa),
                         repo_id=hf_repo_id,
@@ -186,6 +186,7 @@ async def _main(cfg: DictConfig):
                         hf_id=hf_repo_id,
                         num_sessions=num_sessions,
                         telemetry_enabled=is_telemetry_enabled,
+                        git_ref=git_ref,
                     )
                 else:
                     _LOG.warning("No model directory specified, skipping upload.")
