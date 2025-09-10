@@ -68,14 +68,13 @@ def upload_to_huggingface(
         _create_readme(model_path, user_id=user_id)
         api = HfApi(token=hf_token)
         api.create_repo(repo_id=repo_id, repo_type="model", exist_ok=True)
-        ret = api.upload_folder(
-            repo_id=repo_id, repo_type="model", folder_path=model_path
-        )
+        api.upload_folder(repo_id=repo_id, repo_type="model", folder_path=model_path)
+        ret = None
 
         if chain_metadata_dict:
             metadata_json = json.dumps(chain_metadata_dict, indent=2)
             metadata_bytes = io.BytesIO(metadata_json.encode("utf-8"))
-            api.upload_file(
+            ret = api.upload_file(
                 path_or_fileobj=metadata_bytes,
                 path_in_repo="gensyn.json",
                 repo_id=repo_id,
@@ -90,7 +89,9 @@ def upload_to_huggingface(
         )
         telemetry.push_telemetry_event_uploaded(total_size, user_id, repo_id)
 
-        return ret.oid
+        if ret:
+            return ret.oid
+        return None
 
     except Exception as e:
         _LOG.error(f"Failed to upload model to HuggingFace: {e}", exc_info=True)
