@@ -10,7 +10,6 @@ from mbag.scripts.train import ex as train_ex
 from sacred.observers import FileStorageObserver
 
 from blockassist import telemetry
-from blockassist.data import get_total_episodes
 from blockassist.globals import (
     _DEFAULT_CHECKPOINT,
     get_identifier,
@@ -95,10 +94,13 @@ class TrainingRunner:
         _LOG.info("Training ended.")
         self.end_time = time.time()
         duration_ms = int((self.end_time - self.start_time) * 1000)
+        session_count = 1
+        if hasattr(self, "convert_result") and isinstance(self.convert_result, dict):
+            session_count = self.convert_result.get("session_count", 1)
         telemetry.push_telemetry_event_trained(
             duration_ms,
             get_identifier(self.address_eoa),
-            get_total_episodes(self.checkpoint_dir),
+            session_count,
         )
         self.training_ended.set()
 

@@ -182,3 +182,9 @@ export DISABLE_TELEMETRY=1
 ```
 
 **Note**: If you turn off telemetry, your contributions may not be counted towards the [BlockAssist leaderboard](https://dashboard.gensyn.ai).
+
+## Additional Quests and Maps
+
+A new **Diamond Fortress** map and corresponding `DiamondQuestGenerator` are available. The quest loads an overpowered structure built from diamond blocks for a fresh challenge. To try it, set the goal generator to `diamond_quest` and ensure the `diamond_fortress` house is present in your dataset.
+An **Emerald Maze** map and `EmeraldQuestGenerator` offer a labyrinth of emerald blocks; use the `emerald_quest` goal generator with the `emerald_maze` house to explore it.
+An **Obsidian Tower** map and `ObsidianQuestGenerator` present an unbreakable challenge with obsidian blocks; set the goal generator to `obsidian_quest` and ensure the `obsidian_tower` house is available.
