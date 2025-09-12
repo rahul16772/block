@@ -2,7 +2,7 @@ import datetime
 import json
 import os
 import platform
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 
 import requests
 import torch
@@ -12,7 +12,10 @@ TELEMETRY_API_BASE = "https://telemetry-api.internal-apps-central1.clusters.gens
 TELEMETRY_API_EVENT_SESSION = f"{TELEMETRY_API_BASE}/event/session"
 TELEMETRY_API_EVENT_MODEL_TRAINED = f"{TELEMETRY_API_BASE}/event/trained"
 TELEMETRY_API_EVENT_MODEL_UPLOADED = f"{TELEMETRY_API_BASE}/event/uploaded"
-BLOCKASSIST_VERSION = version("blockassist")
+try:
+    BLOCKASSIST_VERSION = version("blockassist")
+except PackageNotFoundError:
+    BLOCKASSIST_VERSION = "0.0.0"
 
 class EventSession(BaseModel):
     timestamp: str

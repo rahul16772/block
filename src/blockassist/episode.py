@@ -13,7 +13,10 @@ from blockassist.globals import (
     get_identifier,
     get_logger,
 )
+from blockassist.goals.diamond_quest import DiamondQuestGenerator
+from blockassist.goals.emerald_quest import EmeraldQuestGenerator
 from blockassist.goals.generator import BlockAssistGoalGenerator
+from blockassist.goals.obsidian_quest import ObsidianQuestGenerator
 
 _LOG = get_logger()
 
@@ -44,13 +47,16 @@ def blockassist():
     }
 
 
-def run_main(evaluate_dirs):
+def run_main():
     ALL_GOAL_GENERATORS["blockassist"] = BlockAssistGoalGenerator
+    ALL_GOAL_GENERATORS["diamond_quest"] = DiamondQuestGenerator
+    ALL_GOAL_GENERATORS["emerald_quest"] = EmeraldQuestGenerator
+    ALL_GOAL_GENERATORS["obsidian_quest"] = ObsidianQuestGenerator
     run = ex.run(
         named_configs=["human_with_assistant", "blockassist"],
         config_updates={"assistant_checkpoint": _DEFAULT_CHECKPOINT},
     )
-    evaluate_dirs.append(Path(run.observers[-1].dir))
+    run_main.evaluate_dir = Path(run.observers[-1].dir)
     result = run.result
     assert result
     return result
@@ -63,7 +69,7 @@ class EpisodeRunner:
         self,
         address_eoa: str,
         checkpoint_dir: str,
-        max_episode_count: int = _MAX_EPISODE_COUNT,
+        episode_count: int = _MAX_EPISODE_COUNT,
         human_alone: bool = True,
     ):
         self.address_eoa = address_eoa
@@ -72,7 +78,7 @@ class EpisodeRunner:
         self.checkpoint_dir = checkpoint_dir
 
         self.completed_episode_count = 0
-        self.max_episode_count = max_episode_count
+        self.episode_count = episode_count
         self.evaluate_dirs = []
 
         self.start_time = time.time()
@@ -118,10 +124,13 @@ class EpisodeRunner:
 
     def start(self):
         self.before_session()
-        for i in range(self.max_episode_count):
+        for i in range(self.episode_count):
             try:
                 _LOG.info(f"Episode {i} recording started.")
-                result = run_main(self.evaluate_dirs)
+                result = run_main()
+                evaluate_dir = getattr(run_main, "evaluate_dir", None)
+                if evaluate_dir:
+                    self.evaluate_dirs.append(evaluate_dir)
                 self.after_episode(result)
             except KeyboardInterrupt:
                 _LOG.info(f"Episode {i} recording stopped!")
