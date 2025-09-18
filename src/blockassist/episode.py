@@ -48,6 +48,19 @@ def blockassist():
     }
 
 
+@ex.config_hook
+def _apply_goal_generator_from_name(config, command_name, logger):
+    """Ensure goal generator matches the configured name after overrides."""
+
+    goal_generator_name = config.get("goal_generator_name", "blockassist")
+    env_config_updates = config.setdefault("env_config_updates", {})
+    goal_generator_config = env_config_updates.setdefault(
+        "goal_generator_config", {}
+    )
+    goal_generator_config["goal_generator"] = goal_generator_name or "blockassist"
+    return config
+
+
 def run_main(goal_generator: str = "blockassist"):
     ALL_GOAL_GENERATORS["blockassist"] = BlockAssistGoalGenerator
     ALL_GOAL_GENERATORS["diamond_quest"] = DiamondQuestGenerator
@@ -59,6 +72,7 @@ def run_main(goal_generator: str = "blockassist"):
         config_updates={
             "assistant_checkpoint": _DEFAULT_CHECKPOINT,
             "goal_generator_name": selected_goal_generator,
+            "env_config_updates.goal_generator_config.goal_generator": selected_goal_generator,
         },
     )
     run_main.evaluate_dir = Path(run.observers[-1].dir)
