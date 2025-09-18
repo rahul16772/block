@@ -35,6 +35,14 @@ SUCCESS_COLOR = "green"
 DELINEATOR_COLOR = "bold white"
 GENSYN_COLOR = "bold magenta"
 
+DEFAULT_QUEST_KEY = "1"
+QUEST_CHOICES = {
+    "1": ("Classic BlockAssist (default)", "blockassist"),
+    "2": ("Diamond Fortress Quest", "diamond_quest"),
+    "3": ("Emerald Maze Quest", "emerald_quest"),
+    "4": ("Obsidian Tower Quest", "obsidian_quest"),
+}
+
 
 def create_logs_dir(clear_existing=True):
     if os.path.exists("logs") and clear_existing:
@@ -145,6 +153,43 @@ def wait_for_keys(keys=_ENTER_KEYS, on_received=None):
                 f"Unknown key pressed: {repr(char)}. Please press a valid key in ({keys}) to continue.",
                 style=WARNING_COLOR,
             )
+
+
+def prompt_for_quest_selection():
+    CONSOLE.print(Markdown("# CHOOSE A QUEST"), style=HEADER_COLOR)
+    CONSOLE.print(
+        "Select the quest you'd like to play. Press ENTER to keep the classic BlockAssist experience.",
+        style=INFO_COLOR,
+    )
+    for key, (label, quest) in QUEST_CHOICES.items():
+        CONSOLE.print(f"  [{key}] {label} — `{quest}`", style=LOG_COLOR)
+
+    while True:
+        choice = input("Quest selection (number or name): ").strip()
+        if not choice:
+            selection_key = DEFAULT_QUEST_KEY
+        elif choice in QUEST_CHOICES:
+            selection_key = choice
+        else:
+            normalized_choice = choice.lower()
+            matching_key = next(
+                (
+                    key
+                    for key, (_, quest) in QUEST_CHOICES.items()
+                    if normalized_choice == quest.lower()
+                ),
+                None,
+            )
+            if matching_key is None:
+                CONSOLE.print(
+                    "Unknown quest selection. Please choose one of the listed options.",
+                    style=WARNING_COLOR,
+                )
+                continue
+            selection_key = matching_key
+
+        label, quest = QUEST_CHOICES[selection_key]
+        return quest, label
 
 
 def send_blockassist_sigint(pid: int):
@@ -311,6 +356,14 @@ By Gensyn
         run_open()
 
     env = wait_for_login()
+
+    quest, quest_label = prompt_for_quest_selection()
+    env["BLOCKASSIST_QUEST"] = quest
+    os.environ["BLOCKASSIST_QUEST"] = quest
+    CONSOLE.print(
+        f"Selected quest: {quest_label} ({quest})",
+        style=SUCCESS_COLOR,
+    )
 
     CONSOLE.print(Markdown("# START MINECRAFT"), style=HEADER_COLOR)
     CONSOLE.print(

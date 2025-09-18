@@ -185,6 +185,10 @@ export DISABLE_TELEMETRY=1
 
 ## Additional Quests and Maps
 
-A new **Diamond Fortress** map and corresponding `DiamondQuestGenerator` are available. The quest loads an overpowered structure built from diamond blocks for a fresh challenge. To try it, set the goal generator to `diamond_quest` and ensure the `diamond_fortress` house is present in your dataset.
-An **Emerald Maze** map and `EmeraldQuestGenerator` offer a labyrinth of emerald blocks; use the `emerald_quest` goal generator with the `emerald_maze` house to explore it.
-An **Obsidian Tower** map and `ObsidianQuestGenerator` present an unbreakable challenge with obsidian blocks; set the goal generator to `obsidian_quest` and ensure the `obsidian_tower` house is available.
+When you run `python run.py`, the launcher now prompts you to choose which quest to play before Minecraft starts. Press `ENTER` to stick with the classic BlockAssist build, or choose one of the themed challenges below:
+
+- **Diamond Fortress Quest** (`diamond_quest`) — Loads a fortress built from diamond blocks.
+- **Emerald Maze Quest** (`emerald_quest`) — Drops you into a labyrinth of emerald blocks.
+- **Obsidian Tower Quest** (`obsidian_quest`) — Challenges you with an obsidian structure.
+
+Advanced users can skip the prompt by exporting `BLOCKASSIST_QUEST` (for example, `BLOCKASSIST_QUEST=diamond_quest`) or by passing a Hydra override such as `python -m blockassist.launch goal_generator=emerald_quest`.
