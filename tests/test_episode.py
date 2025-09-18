@@ -1,8 +1,31 @@
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 
 from blockassist.episode import EpisodeRunner
+
+
+def test_episode_runner_overrides_goal_generator_config():
+    run_result = SimpleNamespace(
+        result={"goal_percentage_1_min": 0.5},
+        observers=[SimpleNamespace(dir="/tmp/eval")],
+    )
+
+    with patch("blockassist.episode.ex.run", return_value=run_result) as mock_run, \
+         patch("blockassist.episode.telemetry.push_telemetry_event_session"), \
+         patch("blockassist.episode.get_identifier", return_value="user"), \
+         patch("time.time", side_effect=[1000.0, 1001.0, 1002.0, 1003.0]):
+        runner = EpisodeRunner(
+            "dummy_address_eoa", "dummy_checkpoint_dir", goal_generator="diamond_quest"
+        )
+        runner.start()
+
+    config_updates = mock_run.call_args.kwargs["config_updates"]
+    assert (
+        config_updates["env_config_updates.goal_generator_config.goal_generator"]
+        == "diamond_quest"
+    )
 
 
 class TestEpisodeRunnerUtils:
