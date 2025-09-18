@@ -5,3 +5,4 @@ num_training_iters: 1
 org_id: ${oc.env:BA_ORG_ID}
 address_eoa: ${oc.env:BA_ADDRESS_EOA}
 address_account: ${oc.env:BA_ADDRESS_ACCOUNT}
+goal_generator: ${oc.env:BLOCKASSIST_QUEST,blockassist}

@@ -131,6 +131,7 @@ async def _main(cfg: DictConfig):
                     address_eoa,
                     checkpoint_dir,
                     human_alone=num_instances == 1,
+                    goal_generator=cfg.get("goal_generator", "blockassist"),
                 )
                 episode_runner.start()
                 await episode_runner.wait_for_end()

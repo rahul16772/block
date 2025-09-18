@@ -118,7 +118,7 @@ class TestEpisodeRunnerTelemetry:
 
         # Create a mock main function that raises KeyboardInterrupt after first call
         call_count = 0
-        def mock_main_side_effect():
+        def mock_main_side_effect(*args, **kwargs):
             nonlocal call_count
             call_count += 1
             if call_count == 1:

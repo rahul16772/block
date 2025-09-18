@@ -27,11 +27,12 @@ def blockassist():
     num_simulations = 1  # noqa: F841
     goal_set = "test"
     house_id = None
+    goal_generator_name = "blockassist"
 
     env_config_updates = {  # noqa: F841
         "num_players": 2,
         "goal_generator_config": {
-            "goal_generator": "blockassist",
+            "goal_generator": goal_generator_name,
             "goal_generator_config": {"subset": goal_set, "house_id": house_id},
         },
         "malmo": {"action_delay": 0.8, "rotate_spectator": False},
@@ -47,14 +48,18 @@ def blockassist():
     }
 
 
-def run_main():
+def run_main(goal_generator: str = "blockassist"):
     ALL_GOAL_GENERATORS["blockassist"] = BlockAssistGoalGenerator
     ALL_GOAL_GENERATORS["diamond_quest"] = DiamondQuestGenerator
     ALL_GOAL_GENERATORS["emerald_quest"] = EmeraldQuestGenerator
     ALL_GOAL_GENERATORS["obsidian_quest"] = ObsidianQuestGenerator
+    selected_goal_generator = goal_generator or "blockassist"
     run = ex.run(
         named_configs=["human_with_assistant", "blockassist"],
-        config_updates={"assistant_checkpoint": _DEFAULT_CHECKPOINT},
+        config_updates={
+            "assistant_checkpoint": _DEFAULT_CHECKPOINT,
+            "goal_generator_name": selected_goal_generator,
+        },
     )
     run_main.evaluate_dir = Path(run.observers[-1].dir)
     result = run.result
@@ -71,11 +76,13 @@ class EpisodeRunner:
         checkpoint_dir: str,
         episode_count: int = _MAX_EPISODE_COUNT,
         human_alone: bool = True,
+        goal_generator: str = "blockassist",
     ):
         self.address_eoa = address_eoa
 
         self.human_alone = human_alone
         self.checkpoint_dir = checkpoint_dir
+        self.goal_generator = goal_generator or "blockassist"
 
         self.completed_episode_count = 0
         self.episode_count = episode_count
@@ -127,7 +134,7 @@ class EpisodeRunner:
         for i in range(self.episode_count):
             try:
                 _LOG.info(f"Episode {i} recording started.")
-                result = run_main()
+                result = run_main(self.goal_generator)
                 evaluate_dir = getattr(run_main, "evaluate_dir", None)
                 if evaluate_dir:
                     self.evaluate_dirs.append(evaluate_dir)
